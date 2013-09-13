@@ -17,32 +17,33 @@ data CtrlSeq {t : Nat} (x : X t) :
          CtrlSeq  x             (S n)  (viableSpec2 x yv)
 -}
 
+-- CtrlSeq x n v is a control path from x of length n
 data CtrlSeq {t : Nat} (x : X t) : 
-             (n : Nat) -> viable n x -> Type where
-  Nil  : (v : viable Z x) -> CtrlSeq x Z v
+             (n : Nat) -> Type where
+  Nil  : CtrlSeq x Z
   _::_ : {n : Nat} -> (yv : viableStep n x) -> let (y , v) = yv in
-         CtrlSeq  (step t x y)  n      v ->
-         CtrlSeq  x             (S n)  (viableSpec2 x yv)
+         CtrlSeq  (step t x y)  n      ->
+         CtrlSeq  x             (S n)
+
+viableLemma : {t : Nat} (x : X t) -> (n : Nat) -> CtrlSeq x n -> viable n x
+viableLemma x ._ Nil         = viableSpec0 x
+viableLemma x ._ (yv :: cs)  = Context.viableSpec2 ctxt x yv
 
 val : {t : Nat} ->
-      (x : X t) -> (n : Nat) -> (v : viable n x) -> 
-      CtrlSeq x n v -> carrier
-val x ._ ._ (Nil v)              = 0F
-val {t} x ._ ._ (_::_ {n} yv yvs)  =
-  let   (y , v') = yv
-        x' : X (S t) 
+      (x : X t) -> (n : Nat) -> 
+      CtrlSeq x n -> carrier
+val x ._ (Nil)              = 0F
+val {t} x ._ (_::_ {n} (y , v') yvs)  =
+  let   x' : X (S t) 
         x' = step t x y
-  in   reward t x y x'  +F  val x' n v' yvs 
+  in   reward t x y x'  +F  val x' n yvs 
 
 
 OptCtrlSeq : {t : Nat} ->
-             (x : X t) -> (n : Nat) -> (v : viable n x) -> 
-             CtrlSeq x n v -> Type
-OptCtrlSeq x n v ys = (ys' : CtrlSeq x n v) -> 
-                      val x n v ys' <=F val x n v ys
+             (x : X t) -> (n : Nat) ->
+             CtrlSeq x n -> Type
+OptCtrlSeq x n ys = ∀ ys' ->  val x n ys' <=F val x n ys
 
 -- Sanity check:
-
-nilIsOptCtrlSeq : {t : Nat} -> 
-                  (x : X t) -> OptCtrlSeq x Z (viableSpec0 x) (Nil (viableSpec0 x))
-nilIsOptCtrlSeq x (Nil ._) = reflexive<=F 0F
+nilIsOptCtrlSeq : {t : Nat} -> (x : X t) -> OptCtrlSeq x Z  Nil
+nilIsOptCtrlSeq x Nil = reflexive<=F 0F

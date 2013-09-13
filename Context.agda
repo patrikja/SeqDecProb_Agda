@@ -1,5 +1,6 @@
 module Context  where
 open import Prelude
+import Relation.Binary
 
 {-
 In the case of a time-dependent set of states and of a deterministic
@@ -9,20 +10,25 @@ terms of:
 
 record RewProp : Set1 where
   field
-    carrier : Type
+    carrier : Type  -- was Float
     0F    : carrier
     _+F_  : carrier -> carrier -> carrier
 
     _<=F_ : carrier -> carrier -> Set
+    isPre : Relation.Binary.IsPreorder _≡_ _<=F_
 
-    reflexive<=F : (x : carrier) -> x <=F x 
-   
+    monoF  : {a b c : carrier} -> (b <=F c) -> (a +F b) <=F (a +F c)
+
+  reflexive<=F : (x : carrier) -> x <=F x 
+  reflexive<=F x = Relation.Binary.IsPreorder.reflexive isPre refl
+
+  Preorder = record {Carrier = carrier; _≈_ = _≡_; _∼_ = _<=F_; isPreorder = isPre}
 
 record Context (Rew : RewProp) : Set1 where
   open RewProp Rew
   field 
-    X : Nat -> Type
-    Y : (t : Nat) -> X t -> Type
+    X : Nat -> Type -- time-dependent state
+    Y : (t : Nat) -> X t -> Type -- time dependent, state-dependent control set
     step :   (t : Nat) -> (x : X t) -> Y t x -> X (S t)
     reward : (t : Nat) -> (x : X t) -> Y t x -> X (S t) -> carrier
 
@@ -37,8 +43,8 @@ record Context (Rew : RewProp) : Set1 where
     reachableSpec1 : {t : Nat} -> (x : X t) -> reachable x ->
                      (y : Y t x) -> reachable (step t x y)
    
-    reachableSpec2 : {t : Nat} -> (x' : X (S t)) -> reachable x' -> 
-                     Σ (X t) (\x -> (reachable x) × (x isPredOf x'))
+    reachableSpec2 : {t : Nat} -> (x' : X (S t)) -> reachable {S t} x' -> 
+                     Σ (X t) (\x -> (reachable {t} x) × (x isPredOf x'))
 
 
     viable : {t : Nat} -> (n : Nat) -> X t -> Set
@@ -57,3 +63,35 @@ record Context (Rew : RewProp) : Set1 where
     viableSpec2 : {t : Nat} -> {n : Nat} -> 
                   (x : X t) -> viableStep n x -> viable (S n) x
 
+  field
+    argmax : {t : Nat} -> (n : Nat) ->
+             (x : X t) -> 
+             (r : reachable x) -> 
+             (v : viable (S n) x) ->
+             (f : viableStep n x -> carrier) -> 
+             viableStep n x
+
+{-
+TODO:
+> max : (n : Nat) ->
+>       (x : X t) -> 
+>       (r : so (reachable x)) -> 
+>       (v : so (viable (S n) x)) ->
+>       (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
+>       Float
+
+> maxSpec : (n : Nat) -> 
+>           (x : X t) ->
+>           (r : so (reachable x)) -> 
+>           (v : so (viable (S n) x)) ->
+>           (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
+>           (yv : (y : Y t x ** so (viable {t = S t} n (step t x y)))) ->
+>           so (f yv <= max n x r v f)
+
+> argmaxSpec : (n : Nat) -> 
+>              (x : X t) ->
+>              (r : so (reachable x)) -> 
+>              (v : so (viable (S n) x)) ->
+>              (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
+>              so (f (argmax n x r v f) == max n x r v f)
+-}
