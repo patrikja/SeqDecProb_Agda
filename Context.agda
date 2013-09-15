@@ -1,6 +1,17 @@
 module Context  where
 open import Prelude
 import Relation.Binary
+open Relation.Binary using (IsPreorder)
+
+record Max (A B : Set) (_<=B_ : B -> B -> Set) 
+           (isPre : IsPreorder _≡_ _<=B_) : Set where
+  
+  field
+    max     : (f : A -> B) -> B
+    argmax  : (f : A -> B) -> A
+             
+    maxSpec     : (f : A -> B) -> (a : A) -> (f a  <=B  max f)
+    argmaxSpec  : (f : A -> B) -> f (argmax f) ≡ max f
 
 {-
 In the case of a time-dependent set of states and of a deterministic
@@ -15,14 +26,20 @@ record RewProp : Set1 where
     _+F_  : carrier -> carrier -> carrier
 
     _<=F_ : carrier -> carrier -> Set
-    isPre : Relation.Binary.IsPreorder _≡_ _<=F_
+    isPre : IsPreorder _≡_ _<=F_
 
     monoF  : {a b c : carrier} -> (b <=F c) -> (a +F b) <=F (a +F c)
 
   reflexive<=F : (x : carrier) -> x <=F x 
-  reflexive<=F x = Relation.Binary.IsPreorder.reflexive isPre refl
+  reflexive<=F x = IsPreorder.reflexive isPre refl
 
   Preorder = record {Carrier = carrier; _≈_ = _≡_; _∼_ = _<=F_; isPreorder = isPre}
+
+  -- We will use the Max specification for different A but for the
+  -- same carrier so we introduce a convenient name for that.
+
+  MaxF : Set -> Set
+  MaxF A = Max A carrier _<=F_ isPre
 
 record Context (Rew : RewProp) : Set1 where
   open RewProp Rew
@@ -63,6 +80,24 @@ record Context (Rew : RewProp) : Set1 where
     viableSpec2 : {t : Nat} -> {n : Nat} -> 
                   (x : X t) -> viableStep n x -> viable (S n) x
 
+{-
+  field 
+    MaxVStep : {t : Nat} ->  (n : Nat) -> 
+               (x : X t) -> 
+               (r : reachable x) -> 
+               (v : viable (S n) x) ->
+               MaxF (viableStep n x)
+    
+  argmax : {t : Nat} -> (n : Nat) ->
+           (x : X t) -> 
+           (r : reachable x) -> 
+           (v : viable (S n) x) ->
+           (f : viableStep n x -> carrier) -> 
+           viableStep n x
+  argmax = {!!} -- Max.argmax ?
+  TODO: use the "generic" Max specification instead of the argmax fields
+  -}
+
   field
     argmax : {t : Nat} -> (n : Nat) ->
              (x : X t) -> 
@@ -71,7 +106,11 @@ record Context (Rew : RewProp) : Set1 where
              (f : viableStep n x -> carrier) -> 
              viableStep n x
 
+
+
 {-
+
+
 TODO:
 > max : (n : Nat) ->
 >       (x : X t) -> 
@@ -95,3 +134,7 @@ TODO:
 >              (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
 >              so (f (argmax n x r v f) == max n x r v f)
 -}
+
+
+
+
