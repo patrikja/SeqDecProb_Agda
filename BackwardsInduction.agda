@@ -20,33 +20,35 @@ OptExtension t n ps p =
     (Val x (S n) r v (p' :: ps)) <=F 
     (Val x (S n) r v (p  :: ps))
 
-valY : (t : Nat) -> (n : Nat) -> 
-       (x : X t) (r : reachable x) (v : viable n x) -> 
-       (ps : PolicySeq (S t) n) -> 
-       viableStep n x -> carrier
-valY t n x r v ps = \yv' -> 
-  let (y , v') = yv'                              
-      x' = step t x y                             
-      r' = reachableSpec1 x r y                   
-  in reward t x y x'  +F  Val x' n r' v' ps       
-
-
 optExtension : (t : Nat) -> (n : Nat) -> 
                PolicySeq (S t) n -> 
-               Policy    t (S n)
-optExtension t n ps = \ x r v -> argmax n x r v (valY t n x r ? ps) 
-                   -- \ x r v -> argmax n x r v (valY t n x r {!v!} ps) 
--- TODO: complete this definition
+               Policy    t (S n) -- (x : X t) -> (r : reachable x) -> (v : viable (S n) x) -> viableStep n x
+optExtension t n ps = \ x r v -> argmax n x r v (ValY t n x r ps) 
 
-{-
 OptExtensionLemma : 
   (t : Nat) -> 
   (n : Nat) -> 
   (ps : PolicySeq (S t) n) ->
   OptExtension t n ps (optExtension t n ps)
 OptExtensionLemma t n ps   p' x r v = 
+  let opE = \ x r v -> argmax n x r v (ValY t n x r ps)
+      yv : viableStep n x   
+      yv = p' x r v         
+  in 
   begin
     Val x (S n) r v (p' :: ps)
+  ∼⟨ reflexive<=F _ ⟩
+    ValY t n x r ps yv
+  ∼⟨ {!!} ⟩ -- TODO: complete the proof - 
+    ValY t n x r ps (opE x r v)
+  ∼⟨ reflexive<=F _ ⟩
+    Val x (S n) r v (opE :: ps)
+  ∼⟨ reflexive<=F _ ⟩
+    Val x (S n) r v (optExtension t n ps :: ps)
+  ∎ 
+  where open Relation.Binary.PreorderReasoning Preorder
+
+{-
   ∼⟨ reflexive<=F _ ⟩
     let  yv : viableStep n x
          yv = p' x r v
@@ -54,22 +56,10 @@ OptExtensionLemma t n ps   p' x r v =
          x' = step t x y
          r' = reachableSpec1 x r y
     in reward t x y x'  +F  Val x' n r' v' ps
-  ∼⟨ {!!} ⟩ -- TODO: complete the proof - probably requires litfing f to the top level
-    let opE = (\ x r v ->
-                 let f : viableStep n x -> carrier                           
-                     f yv' = let (y , v') = yv'                              
-                                 x' = step t x y                             
-                                 r' = reachableSpec1 x r y                   
-                             in reward t x y x'  +F  Val x' n r' v' ps       
-                 in argmax n x r v f)
-    in 
-    Val x (S n) r v (opE :: ps)
-  ∼⟨ reflexive<=F _ ⟩
-    Val x (S n) r v (optExtension t n ps :: ps)
-  ∎ 
-  where open Relation.Binary.PreorderReasoning Preorder
+-}
 
 
+{-
 Bellman : (t : Nat) ->
           (n : Nat) ->
           (ps : PolicySeq (S t) n) ->
