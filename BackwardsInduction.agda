@@ -39,7 +39,10 @@ OptExtensionLemma t n ps   p' x r v =
     Val x (S n) r v (p' :: ps)
   ∼⟨ reflexive<=F _ ⟩
     ValY t n x r ps yv
-  ∼⟨ {!!} ⟩ -- TODO: complete the proof - 
+-- Informally: f = ValY t n x r ps
+--             o = opE x r v = argmax' f
+-- By maxSpec' the order follows
+  ∼⟨ maxSpec' n x r v (ValY t n x r ps) yv ⟩
     ValY t n x r ps (opE x r v)
   ∼⟨ reflexive<=F _ ⟩
     Val x (S n) r v (opE :: ps)
@@ -48,18 +51,6 @@ OptExtensionLemma t n ps   p' x r v =
   ∎ 
   where open Relation.Binary.PreorderReasoning Preorder
 
-{-
-  ∼⟨ reflexive<=F _ ⟩
-    let  yv : viableStep n x
-         yv = p' x r v
-         (y , v') = yv
-         x' = step t x y
-         r' = reachableSpec1 x r y
-    in reward t x y x'  +F  Val x' n r' v' ps
--}
-
-
-{-
 Bellman : (t : Nat) ->
           (n : Nat) ->
           (ps : PolicySeq (S t) n) ->
@@ -86,6 +77,7 @@ Bellman t n ps ops p oep (p' :: ps') x r v =
   ∎
   where open Relation.Binary.PreorderReasoning Preorder
 
+
 backwardsInduction : (t : Nat) -> (n : Nat) -> PolicySeq t n
 backwardsInduction _ Z = Nil
 backwardsInduction t (S n) = ((optExtension t n ps) :: ps) where
@@ -107,4 +99,3 @@ BackwardsInductionLemma t (S n) =
     p = optExtension t n ps
     pIsOptExtension : OptExtension t n ps p
     pIsOptExtension = OptExtensionLemma t n ps
--}

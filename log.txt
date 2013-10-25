@@ -1,3 +1,5 @@
+2013-10-25: Three TODOs done - just OptLemma remaining
+
 2013-10-25: remaining TODOs are
   Context.agda:
   * use the Max record in Context (not important) 

@@ -13,6 +13,8 @@ record Max (A B : Set) (_<=B_ : B -> B -> Set)
     maxSpec     : (f : A -> B) -> (a : A) -> (f a  <=B  max f)
     argmaxSpec  : (f : A -> B) -> f (argmax f) ≡ max f
 
+    maxSpec'    : (f : A -> B) -> (a : A) -> (f a  <=B  f (argmax f))
+
 {-
 In the case of a time-dependent set of states and of a deterministic
 transition function, the context of a DP problem can be formalized in
@@ -80,57 +82,27 @@ record Context (Rew : RewProp) : Set1 where
     viableSpec2 : {t : Nat} -> {n : Nat} -> 
                   (x : X t) -> viableStep n x -> viable (S n) x
 
-{-
+
   field 
     MaxVStep : {t : Nat} ->  (n : Nat) -> 
                (x : X t) -> 
                (r : reachable x) -> 
                (v : viable (S n) x) ->
                MaxF (viableStep n x)
-    
+
   argmax : {t : Nat} -> (n : Nat) ->
            (x : X t) -> 
            (r : reachable x) -> 
            (v : viable (S n) x) ->
            (f : viableStep n x -> carrier) -> 
            viableStep n x
-  argmax = {!!} -- Max.argmax ?
-  TODO: use the "generic" Max specification instead of the argmax fields
-  -}
+  argmax n x r v = Max.argmax (MaxVStep n x r v)
 
-  field
-    argmax : {t : Nat} -> (n : Nat) ->
-             (x : X t) -> 
+  maxSpec' : {t : Nat} -> (n : Nat) -> 
+             (x : X t) ->
              (r : reachable x) -> 
              (v : viable (S n) x) ->
              (f : viableStep n x -> carrier) -> 
-             viableStep n x
-
-
-
-{-
-
-
-TODO:
-> max : (n : Nat) ->
->       (x : X t) -> 
->       (r : so (reachable x)) -> 
->       (v : so (viable (S n) x)) ->
->       (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
->       Float
-
-> maxSpec : (n : Nat) -> 
->           (x : X t) ->
->           (r : so (reachable x)) -> 
->           (v : so (viable (S n) x)) ->
->           (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
->           (yv : (y : Y t x ** so (viable {t = S t} n (step t x y)))) ->
->           so (f yv <= max n x r v f)
-
-> argmaxSpec : (n : Nat) -> 
->              (x : X t) ->
->              (r : so (reachable x)) -> 
->              (v : so (viable (S n) x)) ->
->              (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
->              so (f (argmax n x r v f) == max n x r v f)
--}
+             (yv : viableStep n x) ->
+             f yv <=F f (argmax n x r v f)
+  maxSpec'  n x r v = Max.maxSpec' (MaxVStep n x r v)

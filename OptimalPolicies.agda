@@ -4,6 +4,7 @@ module OptimalPolicies (Rew : RewProp) (ctxt : Context Rew) where
 open RewProp Rew
 open Context.Context ctxt
 open import OptimalControls Rew ctxt renaming (Nil to NilC; _::_ to _::C_)
+import Relation.Binary.PreorderReasoning
 
 -- Policy t n is a function from X that generates a "viable" y
 Policy : Nat -> Nat -> Type
@@ -104,8 +105,7 @@ OptPolicySeq t n ps = (ps' : PolicySeq t n) ->
 nilIsOptPolicySeq : {t : Nat} -> OptPolicySeq t Z Nil
 nilIsOptPolicySeq Nil x r v = reflexive<=F 0F
 
-{-
-
+-- This lemma is not used
 OptLemma :   {t : Nat} ->
              (n : Nat) ->
              (ps : PolicySeq t n) ->
@@ -114,8 +114,24 @@ OptLemma :   {t : Nat} ->
              (r : reachable x) ->
              (v : viable n x) ->
              OptCtrlSeq x n (ctrls x n r v ps)
-OptLemma .0 Nil x x₁ r v NilC = reflexive<=F 0F
-OptLemma {t} .(S n) (_::_ {.t} {n} x ps) x₁ x₂ r v ys' = {!!}  
+OptLemma .0 Nil ops x r v NilC = reflexive<=F 0F
+OptLemma {t} .(S n) (_::_ {.t} {n} pol ps) ops x r v ys' = 
+  begin
+    val x (S n) ys'
+  ∼⟨ {!!} ⟩ -- expand val of ::C
+    val x (S n) 
+      (let yv : viableStep n x
+           yv = pol x r v
+           (y , v') = yv
+           x' = step t x y
+           r' = reachableSpec1 x r y
+           cs : CtrlSeq x' n
+           cs = ctrls x' n r' v' ps
+       in yv ::C cs
+      )
+  ∼⟨ reflexive<=F _ ⟩
+    val x (S n) (ctrls x (S n) r v (pol :: ps))
+  ∎ 
   -- TODO based on the time-independent case
+  where open Relation.Binary.PreorderReasoning Preorder
 
--}
