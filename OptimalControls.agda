@@ -4,7 +4,7 @@ module OptimalControls (Rew : RewProp) (ctxt : Context Rew) where
 open RewProp Rew
 open Context.Context ctxt
 
--- This could come in handy
+-- This could come in handy: the subset of X t which is viable for n steps
 XV : (t : Nat) -> (n : Nat) -> Set
 XV t n = Σ (X t) (\x -> viable n x)
 
@@ -17,7 +17,7 @@ data CtrlSeq {t : Nat} (x : X t) :
          CtrlSeq  x             (S n)  (viableSpec2 x yv)
 -}
 
--- CtrlSeq x n v is a control path from x of length n
+-- CtrlSeq x n is a control path from x of length n
 data CtrlSeq {t : Nat} (x : X t) : 
              (n : Nat) -> Type where
   Nil  : CtrlSeq x Z

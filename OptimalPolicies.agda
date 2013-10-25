@@ -14,18 +14,19 @@ Policy t (S n) = (x : X t) ->
                  viableStep n x
                  --Σ (Y t x) (\y -> viable n (step t x y))
 
+-- PolicySeq t n is a sequence of policies for n steps from t
 data PolicySeq : Nat -> Nat -> Type where
   Nil  : {t : Nat } -> PolicySeq t Z
   _::_ : {t : Nat } -> {n : Nat } -> 
          Policy t (S n) -> PolicySeq (S t) n -> PolicySeq t (S n)
 
-ctrls : {t : Nat} -> 
-       (x : X t) ->
-       (n : Nat) -> 
-       (r : reachable x) -> 
-       (v : viable n x) -> 
-       PolicySeq t n -> 
-       CtrlSeq x n
+ctrls :  {t  : Nat} -> 
+         (x  : X t) ->
+         (n  : Nat) -> 
+         (r  : reachable x) -> 
+         (v  : viable n x) -> 
+         PolicySeq t n -> 
+         CtrlSeq x n
 ctrls x ._ r _ Nil        = NilC
 ctrls x ._ r v (_::_ {t} {n} p ps)  = 
   let yv : viableStep n x

@@ -134,7 +134,3 @@ TODO:
 >              (f : (y : Y t x ** so (viable {t = S t} n (step t x y)))-> Float) -> 
 >              so (f (argmax n x r v f) == max n x r v f)
 -}
-
-
-
-

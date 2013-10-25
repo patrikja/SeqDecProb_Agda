@@ -1,0 +1,80 @@
+2013-10-25: remaining TODOs are
+  Context.agda:
+  * use the Max record in Context (not important) 
+  BackwardsInduction.agda:
+  * define OptLemma based on the time-independent case
+  * optExtension: calculates an optimal Policy to extend a PolicySeq with. ***TODO: complete definition
+  * OptExtensionLemma: proces that optExtension really does what it should. ***TODO: complete proof
+
+  ----------------------------------------------------------------
+  Discussion:
+  * Differences in readability of definitions
+  ** Idris has shorter type signatures where certain parameters can be elided
+  ** Agda has very nice syntax for equality proofs
+
+  ----------------------------------------------------------------
+  I take a snapshop of the directory for sending a bug report later.  
+    ../SeqDecProb_2013-10-25_record_bug.tgz
+
+  Bug in Agda version 2.3.2:
+    An internal error has occurred. Please report this as a bug.
+    Location of the error: src/full/Agda/TypeChecking/Records.hs:216
+  To reproduce:
+    Load the file BackwardsInduction.agda
+  Script version:
+    tar -zxf SeqDecProb_2013-10-25_record_bug.tgz
+    cd SeqDecProb
+    agda -i ~/lib/agda-stdlib -i . BackwardsInduction.agda
+
+
+
+2013-10-25: Continuing the development
+
+  Step 1: Identify the current state and dependencies
+
+Five working modules in dependency order:
+* Prelude: [OK] (minimal)
+* Context: [OK]
+* OptimalControls: Prelude, Context [OK]
+* OptimalPolicies: Prelude, Context, OptimalControls [OK]
+* BackwardsInduction: Prelude, Context, OptimalPolicies [OK]
+
+One module with unconverted Idris-code:
+* Controls: TODO: convert from Idris
+
+  Step 2: Short summary of the modules
+
+Prelude: useful definitions collected + some Idris terminology
+* Nat, Unit, Product, PropositionalEquality and Type = Set
+
+Context: collects the assumptions used in the rest of the development
+* record Max A Reward ... -- for types we can find the maximum of a function from A to Reward
+* record RewProp -- properties for the Reward type (think: real numbers)
+* record Context -- parametrised record collecting requirements for backwards induction
+** TODO: use the Max record in Context (not important) 
+
+OptimalControls: 
+* XV t n -- subset of viable X
+* CtrlSeq x n --  a control path from x of length n
+* viableLemma -- CtrlSeq x n -> viable n x
+* val ~: CtrlSeq x n -> carrier
+* OptCtrlSeq -- defines optimality of control sequences
+
+OptimalPolicies:
+* Policy t n is a function from X that generates a "viable" y
+* PolicySeq t n -- a sequence of policies for n steps from t
+* ctrls ~: PolicySeq t n -> CtrlSeq x n
+* Val   ~: PolicySeq t n -> carrier
+* OptPolicySeq -- the concept of optimality for PolicySeq
+* OptLemma: ***TODO: define this based on the time-independent case
+
+BackwardsInduction:
+* OptExtension: a relation stating when a PolicySeq can be extended by a certain Policy
+* valY: the value of a step + the rest of a PolicySeq
+* optExtension: calculates an optimal Policy to extend a PolicySeq with. ***TODO: complete definition
+* OptExtensionLemma: proces that optExtension really does what it should. ***TODO: complete proof
+* Bellman: the step case in the proof of backwards induction
+* backwardsInduction: recursively build a PolicySeq
+* BackwardsInductionLemma: correctness of backwardsInduction
+
+----------------

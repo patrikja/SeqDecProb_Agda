@@ -22,19 +22,23 @@ OptExtension t n ps p =
 
 valY : (t : Nat) -> (n : Nat) -> 
        (x : X t) (r : reachable x) (v : viable n x) -> 
-       (ps : PolicySeq (S t) n) -> viableStep n x -> carrier
-valY t n x r v ps yv' = 
+       (ps : PolicySeq (S t) n) -> 
+       viableStep n x -> carrier
+valY t n x r v ps = \yv' -> 
   let (y , v') = yv'                              
       x' = step t x y                             
       r' = reachableSpec1 x r y                   
   in reward t x y x'  +F  Val x' n r' v' ps       
 
+
 optExtension : (t : Nat) -> (n : Nat) -> 
                PolicySeq (S t) n -> 
                Policy    t (S n)
-optExtension t n ps = \ x r v -> argmax n x r v (valY t n x r {!v!} ps) 
+optExtension t n ps = \ x r v -> argmax n x r v (valY t n x r ? ps) 
+                   -- \ x r v -> argmax n x r v (valY t n x r {!v!} ps) 
 -- TODO: complete this definition
 
+{-
 OptExtensionLemma : 
   (t : Nat) -> 
   (n : Nat) -> 
@@ -113,3 +117,4 @@ BackwardsInductionLemma t (S n) =
     p = optExtension t n ps
     pIsOptExtension : OptExtension t n ps p
     pIsOptExtension = OptExtensionLemma t n ps
+-}
