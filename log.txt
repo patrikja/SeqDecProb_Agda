@@ -1,3 +1,34 @@
+2013-11-04: Paper submitted
+
+  Dear Patrik Jansson,
+
+  Nicola Botta <botta@pik-potsdam.de> submitted the following
+  paper to Do-Form@MCS2014:
+
+  -------------------------------
+  Sequential decision problems, dependent types and generic solutions
+  -------------------------------
+
+  You are listed as one of the authors of
+  this paper. To enter the Do-Form@MCS2014 Web
+  pages you should visit
+
+    https://www.easychair.org/conferences/?conf=doformmcs2014
+
+  and enter your EasyChair user name and
+  password.
+
+
+  If you forgot your user name or password,
+  please visit
+
+    https://www.easychair.org/account/forgot.cgi
+
+  and specify patrikj@chalmers.se as your email address.
+
+  Best regards,
+  EasyChair Messenger.
+
 2013-10-25: Three TODOs done - just OptLemma remaining
 
 2013-10-25: remaining TODOs are
