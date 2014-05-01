@@ -77,12 +77,12 @@ record Context (Rew : RewProp) : Set1 where
     step :   (t : Nat) -> (x : X t) -> Y t x -> X (S t)
     reward : (t : Nat) -> (x : X t) -> Y t x -> X (S t) -> carrier
 
-    reachable : {t : Nat} -> X t -> Set
-
   _isPredOf_ : {t : Nat} -> X t -> X (S t) -> Set
   _isPredOf_ {t} x x' = Σ (Y t x) (\y -> (x' ≡ step t x y))
 
   field 
+    reachable : {t : Nat} -> X t -> Set
+
     reachableSpec0 : {t : Nat} (x : X t) -> reachable x
 
     reachableSpec1 : {t : Nat} -> (x : X t) -> reachable x ->
@@ -91,7 +91,7 @@ record Context (Rew : RewProp) : Set1 where
     reachableSpec2 : {t : Nat} -> (x' : X (S t)) -> reachable {S t} x' -> 
                      Σ (X t) (\x -> (reachable {t} x) × (x isPredOf x'))
 
-
+  field 
     viable : {t : Nat} -> (n : Nat) -> X t -> Set
 
   -- TODO: Come up with a name indicating there is an "internal" y
@@ -132,3 +132,21 @@ record Context (Rew : RewProp) : Set1 where
              (yv : viableStep n x) ->
              f yv <=F f (argmax n x r v f)
   maxSpec'  n x r v = Max.maxSpec' (MaxVStep n x r v)
+
+
+-- TODO: move to better place
+reachableDefault : (r : RewProp) (c : Context r) ->
+  let open Context c 
+  in  {t : Nat} -> X t -> Set
+reachableDefault r c {Z}   _  = ⊤ 
+reachableDefault r c {S t} x' = Σ (X t) \ x -> 
+                                (reachableDefault r c {t} x) × (x isPredOf x')
+  where open Context c
+
+viableDefault : (r : RewProp) (c : Context r) -> 
+  let open Context c 
+  in  {t : Nat} -> (n : Nat) -> X t -> Set
+viableDefault r c {t} Z     x = ⊤
+viableDefault r c {t} (S n) x = Σ (X (S t)) \ x' -> 
+                                  (x isPredOf x') × (viableDefault r c {S t} n x')
+  where open Context c

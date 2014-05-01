@@ -128,73 +128,53 @@ module Example1 where
   ... | Last    = 2
 
 
---  reachable : {t : Nat} -> X t -> Bool
---  reachable {t = Z} _ = True
---  reachable {t = S t} x' = isAnyBy reachable (preds x')
-
+  
 
 -- --------------------------------------------------------------
   -- TODO: remember to explain specialisation of the general
   -- (parameterised) Context to the case for Nat (here) or Float or
   -- ...
 
-
   ex1Context : Context ex1Rew
   ex1Context = record { }
 
+  viable : {t : Nat} -> (n : Nat) -> X t -> Set
+  viable n x = viableDefault ex1Rew ex1Context n x
+
+  -- Every state is viable
+  viability : {t : Nat} -> (n : Nat) -> (x : X t) -> viable {t} n x
+  viability n x = {!!}
+
+  reachable : {t : Nat} -> X t -> Set
+  reachable {t} x = reachableDefault ex1Rew ex1Context {t} x
+
+  open RewProp ex1Rew
+  viableStepex1 : {t : Nat} -> (n : Nat) -> X t -> Set
+  viableStepex1 {t} n x = Σ (Y t x) (\y -> viable {S t} n (step t x y))
+
+  ex1maxPair : {t : Nat} ->  (n : Nat) -> 
+               (x : X t) -> 
+               (r : reachable {S t} x) -> 
+               (v : viable {t} (S n) x) ->
+               (viableStepex1 {t} n x  ×  Nat) 
+  ex1maxPair n x r v = {!!}
+  -- max n x r v f = snd (maxP (outr (yfysP n x v f)))
+
+  MaxVStep : {t : Nat} ->  (n : Nat) -> 
+             (x : X t) -> 
+             (r : reachable x) -> 
+             (v : viable (S n) x) ->
+             MaxF (Context.viableStep ex1Context n x)
+
+  MaxVStep n x r v = 
+    record { max = {!\ f -> ex1max n x r v f!}; 
+             argmax = {!!}; 
+             maxSpec = {!!}; 
+             argmaxSpec = {!!} }
+
+
 {-
 {-
-  
-  Reachability, viability:
-  
-  -- eqeq : X t -> X t -> Bool
-  ReachabilityViabilityDefaults.eqeq {t = t} x x' = 
-    column {t} x == column {t} x'
-  
-  -- eqeqSpec1 : (x : X t) -> so (eqeq x x)
-  ReachabilityViabilityDefaults.eqeqSpec1 x = believe_me oh
-  
-  pred : X t -> X (S t) -> Bool
-  pred {t} x x' =
-    (admissible {t} x Left && 
-     eqeq {t = S t} x' (step t x (Left ** believe_me (admissible {t} x Left))))
-    ||
-    (admissible {t} x Ahead && 
-     eqeq {t = S t} x' (step t x (Ahead ** believe_me (admissible {t} x Ahead))))
-    || 
-    (admissible {t} x Right && 
-     eqeq {t = S t} x' (step t x (Right ** believe_me (admissible {t} x Right))))
-  
-  -- succs : X t -> (n : Nat ** Vect (X (S t)) n)
-  ReachabilityViabilityDefaults.succs {t} x = filter (pred {t} x) (states (S t))
-  
-  -- preds : X (S t) -> (n : Nat ** Vect (X t) n)
-  ReachabilityViabilityDefaults.preds {t} x' = filter (p t) (states t) where
-    p : (t : Nat) -> X t -> Bool
-    p t x = pred {t} x x'
-  
-  -- succsSpec1 : (x : X t) ->
-  --              (y : Y t x) ->
-  --              so ((step t x y) `isIn` (succs x))
-  ReachabilityViabilityDefaults.succsSpec1 x y = believe_me oh -- ?
-  
-  -- succsSpec2 : (x : X t) ->
-  --              (x' : X (S t)) ->
-  --              so (x' `isIn` (succs x)) ->
-  --              (y : Y t x ** x' = step t x y)
-  ReachabilityViabilityDefaults.succsSpec2 x x' x'inCsuccsx = believe_me oh -- ?
-  
-  -- predsSpec1 : (x : X t) ->
-  --              (y : Y t x) ->
-  --              so (x `isIn` (preds (step t x y)))
-  ReachabilityViabilityDefaults.predsSpec1 x y = believe_me oh -- ?
-  
-  -- predsSpec2 : (x' : X (S t)) ->
-  --              (x : X t) ->
-  --              so (x `isIn` (preds x')) ->
-  --              (y : Y t x ** x' = step t x y)
-  ReachabilityViabilityDefaults.predsSpec2 x' x xinCpredsx' = believe_me oh -- ?
-  
   succsTh : (x : X t) -> so (not (isEmpty (succs {t} x)))
   succsTh x = believe_me oh -- this should be more or less trivial
   
