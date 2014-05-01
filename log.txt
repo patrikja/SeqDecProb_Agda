@@ -1,4 +1,8 @@
-2013-11-04: Paper submitted
+2014-04-30: Looking at the Agda code again
+
+
+
+2013-11-04: Paper submitted [was later rejected]
 
   Dear Patrik Jansson,
 

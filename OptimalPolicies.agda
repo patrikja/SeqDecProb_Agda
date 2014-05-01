@@ -105,6 +105,7 @@ OptPolicySeq t n ps = (ps' : PolicySeq t n) ->
 nilIsOptPolicySeq : {t : Nat} -> OptPolicySeq t Z Nil
 nilIsOptPolicySeq Nil x r v = reflexive<=F 0F
 
+{-
 -- This lemma is not used
 OptLemma :   {t : Nat} ->
              (n : Nat) ->
@@ -132,6 +133,6 @@ OptLemma {t} .(S n) (_::_ {.t} {n} pol ps) ops x r v ys' =
   ∼⟨ reflexive<=F _ ⟩
     val x (S n) (ctrls x (S n) r v (pol :: ps))
   ∎ 
-  -- TODO based on the time-independent case
+  -- TODO based on the time-independent case ~/src/ext/PIK_idris/DynamicProgramming/S1103_OptimalPolicies.lidr
   where open Relation.Binary.PreorderReasoning Preorder
-
+-}

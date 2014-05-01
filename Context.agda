@@ -3,17 +3,42 @@ open import Prelude
 import Relation.Binary
 open Relation.Binary using (IsPreorder)
 
+module Variant where
+  record Maxf (A B : Set) (_<=B_ : B -> B -> Set) 
+              (isPre : IsPreorder _≡_ _<=B_) 
+              (f : A -> B) : Set where
+    field  -- "f is maximiseable"
+      max         : B
+      maxSpec     : (a : A) -> (f a  <=B  max)
+
+      argmax      : A
+      argmaxSpec  : f argmax ≡ max
+
+    maxSpec'    : (a : A) -> (f a  <=B  f argmax)  -- derived operator
+    maxSpec' a = subst (\ z -> f a <=B z) (sym argmaxSpec) (maxSpec a)
+
+  Max : (A B : Set) (_<=B_ : B -> B -> Set) 
+      (isPre : IsPreorder _≡_ _<=B_) -> Set
+  Max A B _<=B_ isPre = ∀ (f : A -> B) ->  Maxf A B _<=B_ isPre f
+
 record Max (A B : Set) (_<=B_ : B -> B -> Set) 
-           (isPre : IsPreorder _≡_ _<=B_) : Set where
-  
+           (isPre : IsPreorder _≡_ _<=B_)  : Set where
   field
-    max     : (f : A -> B) -> B
-    argmax  : (f : A -> B) -> A
+    max         : (f : A -> B) -> B
+    argmax      : (f : A -> B) -> A
              
     maxSpec     : (f : A -> B) -> (a : A) -> (f a  <=B  max f)
     argmaxSpec  : (f : A -> B) -> f (argmax f) ≡ max f
 
-    maxSpec'    : (f : A -> B) -> (a : A) -> (f a  <=B  f (argmax f))
+  maxSpec'    : (f : A -> B) -> (a : A) -> (f a  <=B  f (argmax f)) -- derived operator
+  maxSpec' f a = subst (\ z -> f a <=B z) (sym (argmaxSpec f)) (maxSpec f a)
+
+
+-- Note that we don't necessarily need to require a fully general Max
+-- record from a user. We could instead specialise it to some A and B
+-- for a particular domain.
+-- ParticularSpec = Max MyA MyB myorder ...
+-- p : ParticularSpec
 
 {-
 In the case of a time-dependent set of states and of a deterministic
@@ -21,6 +46,7 @@ transition function, the context of a DP problem can be formalized in
 terms of:
 -}
 
+-- "Rew" = Reward = an abstraction of Float
 record RewProp : Set1 where
   field
     carrier : Type  -- was Float
