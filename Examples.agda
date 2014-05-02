@@ -1,6 +1,6 @@
 module Examples where
 open import Prelude
-open import Context
+open import Context using (Context; RewProp; module RewProp; reachableDefault; viableDefault)
 open import Blt
 open import Relation.Binary using (module DecTotalOrder; Decidable)
 open import Relation.Nullary using (Dec; yes; no)
@@ -9,6 +9,7 @@ open import Data.Fin using (Fin; toℕ; fromℕ; raise) renaming (zero to fZ; su
 open import Data.String using (String)
 -- open import Data.Bool
 open import Data.Sum using (_⊎_)
+open import Max
 -- open import Data.Nat.Properties
 -- open import Data.Float
 
@@ -152,6 +153,147 @@ module Example1 where
   viableStepex1 : {t : Nat} -> (n : Nat) -> X t -> Set
   viableStepex1 {t} n x = Σ (Y t x) (\y -> viable {S t} n (step t x y))
 
+  -- TODO: Move these out to generic library
+  module Utils where
+    NonEmpty : Set -> Set
+    NonEmpty A = Σ Nat (\n -> Vec A (S n))
+
+    mapNonEmpty : {A B : Set} -> (A -> B) -> NonEmpty A -> NonEmpty B
+    mapNonEmpty f (m , v) = (m , Data.Vec.map f v)       
+
+{-
+    filter-filters : ∀ {a p} {A : Set a} →
+                     (P : A → Set p) (dec : Decidable P) (xs : Vec A n) →
+                     All P (filter (⌊_⌋ ∘ dec) xs)
+    filter-filters P dec []       = []
+    filter-filters P dec (x ∷ xs) with dec x
+    filter-filters P dec (x ∷ xs) | yes px = px ∷ filter-filters P dec xs
+    filter-filters P dec (x ∷ xs) | no ¬px = filter-filters P dec xs
+-}
+
+    Any : {A : Set} {n : Nat} -> (P : A -> Set) -> Vec A n -> Set
+    Any P = {!!}
+
+    AnyN : {A : Set} -> (P : A -> Set) -> NonEmpty A -> Set
+    AnyN P (n , v) = Σ (Fin (S n)) (\i -> P (lookup i v))
+
+    filterTagP : {A : Set} ->
+                 (p  : A -> Set) -> 
+                 (as : NonEmpty A) -> 
+                 AnyN p as ->
+                 NonEmpty (Σ A p)
+    filterTagP = {!!}
+{-
+    filterTagP p (a :: Nil) q = (_ ** ((a ** believe_me (p a)) :: Nil)) 
+    filterTagP p (a :: (a' :: as)) q = 
+      if (p a) 
+      then (_ ** ((a ** believe_me (p a)) 
+                  :: 
+                  map 
+                  (\ a'' => (a'' ** believe_me (p a''))) 
+                  (getProof (filter p (a' :: as)))
+                 )
+           )
+      else filterTagP p (a' :: as) (believe_me oh)
+-}
+  open Utils
+
+  viableSpec1ex1 :  {t : Nat} -> {n : Nat} -> 
+                    (x : X t) -> viable (S n) x -> viableStepex1 n x
+  viableSpec1ex1 {t} {n} x v = {!!}
+
+{-
+The idea:
+
+viable (S n) x
+  = { def. }
+isAnyBy (viable n) (succs x)  
+  => { lemma6 }
+(x' : X (S t) ** x' `isIn` (succs x) && viable n x')
+  => { succsSpec2 }
+(y : Y t x ** x' = step t x y)
+  => { viable n x' }
+(y : Y t x ** viable n (step t x y))
+
+> ReachabilityViability.viableSpec1 {t} {n} x v = s11 where
+>   s1 : so (isAnyBy (viable n) (succs x))
+>   s1 = v
+>   s2 : (xx : X (S t) ** 
+>         (so (viable n xx), 
+>          so (xx `isIn` succs x)
+>         )
+>        )
+>   s2 = lemma6 (viable {t = S t} n) (succs x) s1
+>   s3 : X (S t)
+>   s3 = outl s2
+>   s4 : so (s3 `isIn` (succs x))
+>   s4 = snd (outr s2)
+>   s5 : (yy : Y t x ** s3 = step t x yy)
+>   s5 = succsSpec2 x s3 s4
+>   s6 : Y t x
+>   s6 = outl s5
+>   s7 : so (viable n s3)
+>   s7 = fst (outr s2)
+>   s8 : s3 = step t x s6
+>   s8 = outr s5
+>   s9 : so (viable {t = S t} n (step t x s6))
+>   s9 = leibniz (\ xSt => so (viable {t = S t} n xSt)) s8 s7
+>   s11 : (yy : Y t x ** so (viable {t = S t} n (step t x yy)))
+>   s11 = (s6 ** s9)
+
+-}
+
+  allCommands : Vec Action 3
+  allCommands = Left ∷ Right ∷ Ahead ∷ []
+
+  allCommandsNE : NonEmpty Action
+  allCommandsNE = ( 2 ,  allCommands)
+
+  findAllCommands : (a : Action) -> Σ (Fin 3) (\i -> a ≡ lookup i allCommands)
+  findAllCommands Left  = ( fZ          , refl )
+  findAllCommands Right = ( fS fZ       , refl )
+  findAllCommands Ahead = ( fS (fS fZ)  , refl )
+
+  admissiblesP : {t : Nat} -> 
+                 (n : Nat) ->
+                 (x : X t) -> 
+                 (v : viable {t} (S n) x) -> 
+                 NonEmpty (Y t x)
+  admissiblesP {t} n x v = filterTagP (admissible x) allCommandsNE oneIsAdmissible
+    where  isFeasible : viableStepex1 {t} n x -- Σ (Y t x) (\y -> viable n (step t x y))
+           isFeasible = viableSpec1ex1 {t} x v 
+           a : Action
+           a = fst (fst isFeasible)
+           p : admissible x a
+           p = snd (fst isFeasible)
+           isIn : Σ (Fin 3) (\i -> a ≡ lookup i allCommands)
+           isIn = findAllCommands a
+           oneIsAdmissible : AnyN (admissible x) allCommandsNE
+                -- Σ (Fin 3) (λ i → admissible x (lookup i allCommands))
+           oneIsAdmissible = (fst isIn , p)
+
+  -- Computes a vector of pairs of "viable" controls and corresponding values of f
+  yfysP : {t : Nat} -> 
+          (n : Nat) ->
+          (x : X t) -> 
+          (v : viable {t} (S n) x) -> -- Ensures that the result vector is non-empty
+          (f :      viableStepex1 {t} n x  -> Nat) -> 
+          NonEmpty (viableStepex1 {t} n x  ×  Nat)
+  yfysP {t} n x v f = mapNonEmpty (pairId f) ysP
+    where ys : NonEmpty (Y t x)
+          ys = {!admissiblesP x v!}
+          p : Y t x -> Set
+          p y = viable {S t} n (step t x y)
+          s4 : {!!}
+          s4 = {!!}
+          ysP : NonEmpty (Σ (Y t x) p)
+                     -- (viableStepex1 {t} n x)
+          ysP = filterTagP p ys s4
+{--}
+  -- Compute a list of all possible commands
+  -- filter out only the "viableStep" commands
+  -- apply f to compute the second components of the pair
+
   ex1maxPair : {t : Nat} ->  (n : Nat) -> 
                (x : X t) -> 
                (r : reachable {S t} x) -> 
@@ -159,6 +301,8 @@ module Example1 where
                (viableStepex1 {t} n x  ×  Nat) 
   ex1maxPair n x r v = {!!}
   -- max n x r v f = snd (maxP (outr (yfysP n x v f)))
+
+
 
   MaxVStep : {t : Nat} ->  (n : Nat) -> 
              (x : X t) -> 
