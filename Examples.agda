@@ -1,32 +1,15 @@
 module Examples where
 open import Prelude
-open import Context using (Context; RewProp; module RewProp; reachableDefault; viableDefault)
+import Context -- not opened yet to avoid namespace pollution
+
 open import Blt
 open import Relation.Binary using (module DecTotalOrder; Decidable)
 open import Relation.Nullary using (Dec; yes; no)
 open import Data.Vec
 open import Data.Fin using (Fin; toℕ; fromℕ; raise) renaming (zero to fZ; suc to fS)
 open import Data.String using (String)
--- open import Data.Bool
-open import Data.Sum using (_⊎_)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Max
--- open import Data.Nat.Properties
--- open import Data.Float
-
--- import Util.VectExtensions1
--- import Logic.Postulates
--- import Logic.Properties
--- import Float.Postulates
--- import Float.Properties
--- import Util.Opt
--- import Util.Util
--- import Exists.Ops
--- 
--- import DynamicProgramming.S1202_ReachabilityViability
--- import DynamicProgramming.S1203_OptimalPolicies
--- import DynamicProgramming.S1204_MaxArgmax
--- import DynamicProgramming.S1205_BackwardsInduction
--- import DynamicProgramming.S1202_ReachabilityViabilityDefaults
 
 import BackwardsInduction 
 
@@ -36,7 +19,7 @@ module Example1 where
   monoNat {Z}   b≤c = b≤c
   monoNat {S a} b≤c = s≤s (monoNat {a} b≤c)
 
-  ex1Rew : RewProp
+  ex1Rew : Context.RewType
   ex1Rew = record {
             carrier = Nat;
             0F = 0;
@@ -72,6 +55,21 @@ module Example1 where
     Ahead : Action
     Right : Action
 
+  data Place : Set where 
+    First  : Place
+    Middle : Place
+    Last   : Place
+
+  -- TODO: Move up/out
+  _<?_ : Decidable _<_
+  x <? y = S x ≤? y
+
+  analyze : (x : Blt nColumns) -> Place
+  analyze x with toℕ x <? maxColumn
+  analyze fZ     | yes _ = First
+  analyze (fS _) | yes _ = Middle
+  analyze _      | no _  = Last
+
   show : Action -> String
   show Left = "L"
   show Ahead = "A"
@@ -80,10 +78,22 @@ module Example1 where
   admissible : {t : Nat} -> X t -> Action -> Set
   admissible x Ahead = (column x ≡ Z) ‌⊎ (column x ≡ maxColumn)
   admissible x Left  = column x ≤ maxColumnO2
-  admissible x Right = column x ≥ maxColumnO2
+  admissible x Right = column x ≥ maxColumnO2 
+{-
+x  \  y        Ahead     Left    Right
+First            X         X
+Middle early               X            
+Middle late                X       X    -- Note the choice of Left or Right here
+Last             X                 X
+-}  
 
   Y : (t : Nat) -> X t -> Type
   Y t x = Σ Action (admissible {t} x)
+
+  alwaysAdmissible : {t : Nat} -> (x : X t) -> Y t x -- Σ Action (admissible x)
+  alwaysAdmissible fZ           = (Ahead  , inj₁ refl    )
+  alwaysAdmissible (fS fZ)      = (Left   , s≤s z≤n      )
+  alwaysAdmissible (fS (fS _))  = (Right  , s≤s (s≤s z≤n))
 
   lower : ∀ {m} → (x : Fin (S m)) -> (toℕ x < m) → Fin m 
   lower fZ     (s≤s p) = fZ
@@ -91,9 +101,6 @@ module Example1 where
 
 --  lower : ∀ {m} n → (x : Fin (n + m)) -> (toℕ x < m) → Fin m 
 --  lower = {!!}  TODO
-
-  _<?_ : Decidable _<_
-  x <? y = S x ≤? y
 
   incColWrap : {m : Nat} -> Blt m -> Blt m
   incColWrap {Z} ()
@@ -107,72 +114,60 @@ module Example1 where
 
   -- TODO: think about making this more readable (avoiding fromℕ, raise etc.)
   step : (t : Nat) -> (x : X t) -> Y t x -> X (S t)
-  step t n (Left  , _) = decColWrap n
-  step t n (Ahead , _) = n
-  step t n (Right , _) = incColWrap n
-
-  data Place : Set where 
-    First  : Place
-    Middle : Place
-    Last   : Place
-
-  analyze : (t : Nat) -> (x : X t) -> Place
-  analyze t x with toℕ x <? maxColumn
-  analyze t fZ     | yes _ = First
-  analyze t (fS _) | yes _ = Middle
-  analyze t _      | no _  = Last
+  step t x (Left  , _) = decColWrap x
+  step t x (Ahead , _) = x
+  step t x (Right , _) = incColWrap x
 
   reward : (t : Nat) -> (x : X t) -> Y t x -> X (S t) -> Nat
-  reward t x y x' with analyze (S t) x'
+  reward t x y x' with analyze x'
   ... | First   = 1
   ... | Middle  = 0
   ... | Last    = 2
 
-
-  
-
 -- --------------------------------------------------------------
   -- TODO: remember to explain specialisation of the general
-  -- (parameterised) Context to the case for Nat (here) or Float or
+  -- (parameterised) ContextType to the case for Nat (here) or Float or
   -- ...
 
-  ex1Context : Context ex1Rew
-  ex1Context = record { }
+  ex1Context : Context.ContextType
+  ex1Context = record { X = X; Y = Y; step = step }
 
   viable : {t : Nat} -> (n : Nat) -> X t -> Set
-  viable n x = viableDefault ex1Rew ex1Context n x
+  viable {t} n x = viableDefault {t} n x
+    where open Context.Defaults ex1Context
 
   -- Every state is viable
   viability : {t : Nat} -> (n : Nat) -> (x : X t) -> viable {t} n x
-  viability n x = {!!}
+  viability {t} Z      x = oh
+  viability {t} (S n)  x = (x'  , (( y , refl ) , viability {S t} n x' ))
+    where  y : Y t x
+           y = alwaysAdmissible {t} x
+           x' : X (S t)
+           x' = step t x y
+{-
+-}
 
   reachable : {t : Nat} -> X t -> Set
-  reachable {t} x = reachableDefault ex1Rew ex1Context {t} x
+  reachable {t} x = reachableDefault {t} x
+    where open Context.Defaults ex1Context
 
-  open RewProp ex1Rew
+  open Context.RewType ex1Rew
   viableStepex1 : {t : Nat} -> (n : Nat) -> X t -> Set
   viableStepex1 {t} n x = Σ (Y t x) (\y -> viable {S t} n (step t x y))
 
   -- TODO: Move these out to generic library
   module Utils where
+    List : Set -> Set
+    List A = Σ Nat (Vec A)
+
+    Any : {A : Set} (P : A -> Set) -> List A -> Set
+    Any {A} P (n , v) = Σ (Fin n) (\i -> P (lookup i v))
+
     NonEmpty : Set -> Set
     NonEmpty A = Σ Nat (\n -> Vec A (S n))
 
     mapNonEmpty : {A B : Set} -> (A -> B) -> NonEmpty A -> NonEmpty B
     mapNonEmpty f (m , v) = (m , Data.Vec.map f v)       
-
-{-
-    filter-filters : ∀ {a p} {A : Set a} →
-                     (P : A → Set p) (dec : Decidable P) (xs : Vec A n) →
-                     All P (filter (⌊_⌋ ∘ dec) xs)
-    filter-filters P dec []       = []
-    filter-filters P dec (x ∷ xs) with dec x
-    filter-filters P dec (x ∷ xs) | yes px = px ∷ filter-filters P dec xs
-    filter-filters P dec (x ∷ xs) | no ¬px = filter-filters P dec xs
--}
-
-    Any : {A : Set} {n : Nat} -> (P : A -> Set) -> Vec A n -> Set
-    Any P = {!!}
 
     AnyN : {A : Set} -> (P : A -> Set) -> NonEmpty A -> Set
     AnyN P (n , v) = Σ (Fin (S n)) (\i -> P (lookup i v))
@@ -182,9 +177,10 @@ module Example1 where
                  (as : NonEmpty A) -> 
                  AnyN p as ->
                  NonEmpty (Σ A p)
-    filterTagP = {!!}
+    filterTagP p (.0 , x ∷ []) (fZ , pHolds) = (0 , ((x , pHolds) ∷ []))
+    filterTagP p (.0 , x ∷ []) (fS () , q)   -- cannot happen
+    filterTagP p ((S n) , x1 ∷ x2 ∷ v) anyN = {!!}
 {-
-    filterTagP p (a :: Nil) q = (_ ** ((a ** believe_me (p a)) :: Nil)) 
     filterTagP p (a :: (a' :: as)) q = 
       if (p a) 
       then (_ ** ((a ** believe_me (p a)) 
@@ -308,7 +304,7 @@ isAnyBy (viable n) (succs x)
              (x : X t) -> 
              (r : reachable x) -> 
              (v : viable (S n) x) ->
-             MaxF (Context.viableStep ex1Context n x)
+             MaxF (viableStepex1 n x)
 
   MaxVStep n x r v = 
     record { max = {!\ f -> ex1max n x r v f!}; 
@@ -317,7 +313,6 @@ isAnyBy (viable n) (succs x)
              argmaxSpec = {!!} }
 
 
-{-
 {-
   succsTh : (x : X t) -> so (not (isEmpty (succs {t} x)))
   succsTh x = believe_me oh -- this should be more or less trivial
@@ -460,12 +455,4 @@ isAnyBy (viable n) (succs x)
   
   main : IO ()
   main = putStrLn (show as)
-
-
-
-
-
-
-
--}
 -}

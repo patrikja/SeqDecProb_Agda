@@ -1,9 +1,8 @@
 open import Prelude
 open import Context
-module BackwardsInduction (Rew : RewProp) (ctxt : Context Rew) where
-open RewProp Rew
-open Context.Context ctxt
-open import OptimalPolicies Rew ctxt
+module BackwardsInduction (Reward : RewardType) where
+open RewardType Reward
+open import OptimalPolicies Reward
 import Relation.Binary.PreorderReasoning
 
 

@@ -46,8 +46,8 @@ transition function, the context of a DP problem can be formalized in
 terms of:
 -}
 
--- "Rew" = Reward = an abstraction of Float
-record RewProp : Set1 where
+-- "RewType" (reward type) contain an abstraction of Float
+record RewType : Set1 where
   field
     carrier : Type  -- was Float
     0F    : carrier
@@ -69,17 +69,18 @@ record RewProp : Set1 where
   MaxF : Set -> Set
   MaxF A = Max A carrier _<=F_ isPre
 
-record Context (Rew : RewProp) : Set1 where
-  open RewProp Rew
+-- TODO: Rename ContextType to something better
+record ContextType : Set1 where
   field 
     X : Nat -> Type -- time-dependent state
-    Y : (t : Nat) -> X t -> Type -- time dependent, state-dependent control set
-    step :   (t : Nat) -> (x : X t) -> Y t x -> X (S t)
-    reward : (t : Nat) -> (x : X t) -> Y t x -> X (S t) -> carrier
+    Y    : (t : Nat) -> X t -> Type -- time dependent, state-dependent control set
+    step : (t : Nat) -> (x : X t) -> Y t x -> X (S t)
 
   _isPredOf_ : {t : Nat} -> X t -> X (S t) -> Set
   _isPredOf_ {t} x x' = Σ (Y t x) (\y -> (x' ≡ step t x y))
 
+record ReachableType (Context : ContextType) : Set1 where
+  open ContextType Context
   field 
     reachable : {t : Nat} -> X t -> Set
 
@@ -90,6 +91,9 @@ record Context (Rew : RewProp) : Set1 where
    
     reachableSpec2 : {t : Nat} -> (x' : X (S t)) -> reachable {S t} x' -> 
                      Σ (X t) (\x -> (reachable {t} x) × (x isPredOf x'))
+
+record ViableType (Context : ContextType) : Set1 where
+  open ContextType Context
 
   field 
     viable : {t : Nat} -> (n : Nat) -> X t -> Set
@@ -108,8 +112,36 @@ record Context (Rew : RewProp) : Set1 where
     viableSpec2 : {t : Nat} -> {n : Nat} -> 
                   (x : X t) -> viableStep n x -> viable (S n) x
 
+module Defaults (c : ContextType) where
+  open ContextType c
 
-  field 
+  reachableDefault : {t : Nat} -> X t -> Set
+  reachableDefault {Z}   _  = ⊤ 
+  reachableDefault {S t} x' = Σ (X t) \ x -> 
+                                (reachableDefault {t} x) × (x isPredOf x')
+
+  viableDefault : {t : Nat} -> (n : Nat) -> X t -> Set
+  viableDefault {t} Z     x = ⊤
+  viableDefault {t} (S n) x = Σ (X (S t)) \ x' -> 
+                                (x isPredOf x') × (viableDefault {S t} n x')
+
+-- Pack it all up
+-- TODO: Rename RewardType? FullContextType? ContextType?
+
+record RewardType : Set1 where
+  field
+    Rew       : RewType
+    Context   : ContextType
+    Reachable : ReachableType Context
+    Viable    : ViableType Context
+  open RewType       Rew    
+  open ContextType   Context
+  open ReachableType Reachable
+  open ViableType    Viable 
+
+  field
+    reward : (t : Nat) -> (x : X t) -> Y t x -> X (S t) -> carrier
+
     MaxVStep : {t : Nat} ->  (n : Nat) -> 
                (x : X t) -> 
                (r : reachable x) -> 
@@ -133,20 +165,10 @@ record Context (Rew : RewProp) : Set1 where
              f yv <=F f (argmax n x r v f)
   maxSpec'  n x r v = Max.maxSpec' (MaxVStep n x r v)
 
+  open RewType       Rew        public
+  open ContextType   Context    public
+  open ReachableType Reachable  public
+  open ViableType    Viable     public
 
--- TODO: move to better place
-reachableDefault : (r : RewProp) (c : Context r) ->
-  let open Context c 
-  in  {t : Nat} -> X t -> Set
-reachableDefault r c {Z}   _  = ⊤ 
-reachableDefault r c {S t} x' = Σ (X t) \ x -> 
-                                (reachableDefault r c {t} x) × (x isPredOf x')
-  where open Context c
+----------------------------------------------------------------
 
-viableDefault : (r : RewProp) (c : Context r) -> 
-  let open Context c 
-  in  {t : Nat} -> (n : Nat) -> X t -> Set
-viableDefault r c {t} Z     x = ⊤
-viableDefault r c {t} (S n) x = Σ (X (S t)) \ x' -> 
-                                  (x isPredOf x') × (viableDefault r c {S t} n x')
-  where open Context c

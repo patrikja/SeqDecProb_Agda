@@ -1,6 +1,21 @@
 2014-04-30: Looking at the Agda code again
 
+  log.txt  -- this documentation file
 
+
+  Blt.agda       -- Helper: bounded natural numbers (Fin)
+  Prelude.agda
+
+  Max.agda       -- parts of the assumptions would fit in here (not used by Context yet)
+  Context.agda   -- records of assumptions for the main algorithm
+  OptimalControls.agda  -- imports Context
+  OptimalPolicies.agda  -- imports Context
+
+  BackwardsInduction.agda -- Main file
+
+  Examples.agda  -- Imports most of the other files
+  
+  Controls.agda  -- TODO - still Idris code (imports Context)
 
 2013-11-04: Paper submitted [was later rejected]
 

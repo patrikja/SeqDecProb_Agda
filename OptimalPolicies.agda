@@ -1,9 +1,10 @@
 open import Prelude
 open import Context
-module OptimalPolicies (Rew : RewProp) (ctxt : Context Rew) where
-open RewProp Rew
-open Context.Context ctxt
-open import OptimalControls Rew ctxt renaming (Nil to NilC; _::_ to _::C_)
+module OptimalPolicies (Reward : RewardType) where
+
+open import OptimalControls Reward renaming (Nil to NilC; _::_ to _::C_)
+open RewardType Reward
+
 import Relation.Binary.PreorderReasoning
 
 -- Policy t n is a function from X that generates a "viable" y

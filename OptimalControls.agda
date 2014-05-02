@@ -1,12 +1,11 @@
 open import Prelude
 open import Context
-module OptimalControls (Rew : RewProp) (ctxt : Context Rew) where
-open RewProp Rew
-open Context.Context ctxt
+module OptimalControls (Reward  : RewardType) where
+open RewardType Reward
 
 -- This could come in handy: the subset of X t which is viable for n steps
 XV : (t : Nat) -> (n : Nat) -> Set
-XV t n = Σ (X t) (\x -> viable n x)
+XV t n = Σ (X t) (viable n)
 
 {-
 data CtrlSeq {t : Nat} (x : X t) : 
@@ -27,7 +26,7 @@ data CtrlSeq {t : Nat} (x : X t) :
 
 viableLemma : {t : Nat} (x : X t) -> (n : Nat) -> CtrlSeq x n -> viable n x
 viableLemma x ._ Nil         = viableSpec0 x
-viableLemma x ._ (yv :: cs)  = Context.viableSpec2 ctxt x yv
+viableLemma x ._ (yv :: cs)  = viableSpec2 x yv
 
 val : {t : Nat} ->
       (x : X t) -> (n : Nat) -> 
