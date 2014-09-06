@@ -1,3 +1,14 @@
+2014-09-06: Installed new Agda: version 2.4.2
+
+  cd ~/lib
+  wget https://github.com/agda/agda-stdlib/archive/v0.8.1.tar.gz
+  tar -zxf v0.8.1.tar.gz
+  rm agda-stdlib
+  ln -s agda-stdlib-0.8.1/src agda-stdlib
+
+  agda -i . -i /home/patrikj/lib/agda-stdlib Examples.agda
+  -> loads fine, but lots of holes (metavariables) remain
+
 2014-04-30: Looking at the Agda code again
 
   log.txt  -- this documentation file

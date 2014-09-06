@@ -1,4 +1,6 @@
-module Controls
+module Controls where
+-- Unused module
+{-
 import Util.VectExtensions1
 import DynamicProgramming.S1201_Context
 
@@ -18,3 +20,4 @@ lemma3 {t} {x} = VectExtensions1.lemma3 (Y t x) eqeq eqeqSpec1
 
 whole : (n : Nat ** Vect n (Y t x)) -> Type
 whole {t} {x} = VectExtensions1.whole (Y t x) eqeq eqeqSpec1 
+-}
