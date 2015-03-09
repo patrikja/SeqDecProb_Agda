@@ -3,6 +3,10 @@
   This Agda development was an attempt at understanding the Idris code
   in what later became https://github.com/nicolabotta/SeqDecProbs
 
+  The code is for the time-parameterised, non-monadic case.
+
+  Upgraded agda-stdlib to version 0.9 to match with Agda-2.4.2.2.
+
 2014-09-06: Installed new Agda: version 2.4.2
 
   cd ~/lib

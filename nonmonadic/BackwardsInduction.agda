@@ -5,12 +5,8 @@ open RewardType Reward
 open import OptimalPolicies Reward
 import Relation.Binary.PreorderReasoning
 
-
-OptExtension : (t : Nat) -> 
-               (n : Nat) -> 
-               PolicySeq (S t) n -> 
-               Policy    t (S n) -> 
-               Type
+OptExtension : (t : Nat) -> (n : Nat) -> 
+               PolicySeq (S t) n -> Policy t (S n) -> Type
 OptExtension t n ps p = 
   (p' : Policy t (S n)) ->
   (x : X t) ->
@@ -20,15 +16,13 @@ OptExtension t n ps p =
     (Val x (S n) r v (p  :: ps))
 
 optExtension : (t : Nat) -> (n : Nat) -> 
-               PolicySeq (S t) n -> 
-               Policy    t (S n) -- (x : X t) -> (r : reachable x) -> (v : viable (S n) x) -> viableStep n x
+               PolicySeq (S t) n -> Policy t (S n)
+ -- (x : X t) -> (r : reachable x) -> (v : viable (S n) x) -> viableStep n x
 optExtension t n ps = \ x r v -> argmax n x r v (ValY t n x r ps) 
 
 OptExtensionLemma : 
-  (t : Nat) -> 
-  (n : Nat) -> 
-  (ps : PolicySeq (S t) n) ->
-  OptExtension t n ps (optExtension t n ps)
+  (t : Nat) -> (n : Nat) -> 
+  (ps : PolicySeq (S t) n) -> OptExtension t n ps (optExtension t n ps)
 OptExtensionLemma t n ps   p' x r v = 
   let opE = \ x r v -> argmax n x r v (ValY t n x r ps)
       yv : viableStep n x   
@@ -50,12 +44,9 @@ OptExtensionLemma t n ps   p' x r v =
   ∎ 
   where open Relation.Binary.PreorderReasoning Preorder
 
-Bellman : (t : Nat) ->
-          (n : Nat) ->
-          (ps : PolicySeq (S t) n) ->
-          OptPolicySeq (S t) n ps ->
-          (p : Policy t (S n)) ->
-          OptExtension t n ps p ->
+Bellman : (t : Nat) -> (n : Nat) ->
+          (ps : PolicySeq (S t) n) ->  OptPolicySeq (S t) n ps ->
+          (p : Policy t (S n)) ->      OptExtension t n ps p ->
           OptPolicySeq t (S n) (p :: ps)
 Bellman t n ps ops p oep (p' :: ps') x r v =
   begin
@@ -79,21 +70,19 @@ Bellman t n ps ops p oep (p' :: ps') x r v =
 
 backwardsInduction : (t : Nat) -> (n : Nat) -> PolicySeq t n
 backwardsInduction _ Z = Nil
-backwardsInduction t (S n) = ((optExtension t n ps) :: ps) where
+backwardsInduction t (S n) = (optExtension t n ps) :: ps where
   ps : PolicySeq (S t) n
   ps = backwardsInduction (S t) n
 
-BackwardsInductionLemma : (t : Nat) -> 
-                          (n : Nat) -> 
+BackwardsInductionLemma : (t : Nat) -> (n : Nat) -> 
                           OptPolicySeq t n (backwardsInduction t n)
 BackwardsInductionLemma _ Z = nilIsOptPolicySeq
-
 BackwardsInductionLemma t (S n) = 
   Bellman t n ps psIsOptPolicySeq p pIsOptExtension where
     ps : PolicySeq (S t) n
     ps = backwardsInduction (S t) n
     psIsOptPolicySeq : OptPolicySeq (S t) n ps
-    psIsOptPolicySeq =  BackwardsInductionLemma (S t) n
+    psIsOptPolicySeq = BackwardsInductionLemma (S t) n
     p : Policy t (S n)
     p = optExtension t n ps
     pIsOptExtension : OptExtension t n ps p

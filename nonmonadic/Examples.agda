@@ -76,7 +76,7 @@ module Example1 where
   show Right = "R"
   
   admissible : {t : Nat} -> X t -> Action -> Set
-  admissible x Ahead = (column x ≡ Z) ‌⊎ (column x ≡ maxColumn)
+  admissible x Ahead = _⊎_ (column x ≡ Z) (column x ≡ maxColumn)
   admissible x Left  = column x ≤ maxColumnO2
   admissible x Right = column x ≥ maxColumnO2 
 {-
