@@ -1,3 +1,8 @@
+2015-03-09: Split off from larger local repo and pushed to github
+
+  This Agda development was an attempt at understanding the Idris code
+  in what later became https://github.com/nicolabotta/SeqDecProbs
+
 2014-09-06: Installed new Agda: version 2.4.2
 
   cd ~/lib
