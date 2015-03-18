@@ -6,13 +6,23 @@ import Data.Fin
 -- %default total
 
 -- ||| An isomorphism between two types
+{-
 data Iso : Type -> Type -> Set1 where
-  MkIso : {a : Type} -> {b : Type} -> 
+  MkIso : {a : Type} -> {b : Type} ->
           (to : a -> b) ->
           (from : b -> a) ->
           (toFrom : (y : b) -> to (from y) == y) ->
           (fromTo : (x : a) -> from (to x) == x) ->
           Iso a b
+-}
+
+record Iso (a : Type) (b : Type) : Set1 where
+  constructor MkIso
+  field
+    to : a -> b
+    from : b -> a
+    toFrom : (y : b) -> to (from y) == y
+    fromTo : (x : a) -> from (to x) == x
 
 -- Isomorphism properties
 
@@ -20,18 +30,19 @@ data Iso : Type -> Type -> Set1 where
 isoRefl : {a : Type} -> Iso a a
 isoRefl = MkIso id id (\x -> Refl) (\x -> Refl)
 
+
 -- ||| Isomorphism is transitive
-isoTrans : {a : Type} -> {b : Type} -> {c : Type} -> 
+isoTrans : {a : Type} -> {b : Type} -> {c : Type} ->
            Iso a b -> Iso b c -> Iso a c
 isoTrans (MkIso to from toFrom fromTo) (MkIso to' from' toFrom' fromTo') =
   MkIso (\x -> to' (to x))
         (\y -> from (from' y))
-        (\y -> {! (to' (to (from (from' y))))  ={ cong (toFrom (from' y)) }=
-                  (to' (from' y))              ={ toFrom' y               }=
-                  y                            QED !})
-        (\x -> {! (from (from' (to' (to x))))  ={ cong (fromTo' (to x)) }=
-                  (from (to x))                ={ fromTo x              }=
-                  x                            QED !})
+        (\y -> (to' (to (from (from' y))))  ==< cong {f = to'} (toFrom (from' y)) >==
+               ((to' (from' y))             ==< toFrom' y >==
+               y                            QED))
+        (\x -> (from (from' (to' (to x))))  ==< cong {f = from} (fromTo' (to x)) >==
+              ((from (to x))                ==< fromTo x  >==
+               x                            QED) )
 
 -- ||| Isomorphism is symmetric
 isoSym : {a : Type} -> {b : Type} ->
@@ -41,95 +52,95 @@ isoSym (MkIso to from toFrom fromTo) = MkIso from to fromTo toFrom
 -- Isomorphisms over sums
 
 -- ||| Disjunction is commutative
-eitherComm : {a : Type} -> {b : Type} -> 
+eitherComm : {a : Type} -> {b : Type} ->
              Iso (Either a b) (Either b a)
 eitherComm = MkIso swap swap swapSwap swapSwap
-  where swap : {a : Type} -> {b : Type} -> 
+  where swap : {a : Type} -> {b : Type} ->
                Either a b -> Either b a
         swap (Left x) = Right x
         swap (Right x) = Left x
-        swapSwap : {a : Type} -> {b : Type} -> 
+        swapSwap : {a : Type} -> {b : Type} ->
                    (e : Either a b) -> swap (swap e) == e
         swapSwap (Left x) = Refl
         swapSwap (Right x) = Refl
 
 -- ||| Disjunction is associative
-eitherAssoc : {a : Type} -> {b : Type} -> {c : Type} -> 
+eitherAssoc : {a : Type} -> {b : Type} -> {c : Type} ->
               Iso (Either (Either a b) c) (Either a (Either b c))
 eitherAssoc = MkIso eitherAssoc1 eitherAssoc2 ok1 ok2
-  where eitherAssoc1 : {a : Type} -> {b : Type} -> {c : Type} -> 
+  where eitherAssoc1 : {a : Type} -> {b : Type} -> {c : Type} ->
                        Either (Either a b) c -> Either a (Either b c)
         eitherAssoc1 (Left (Left x)) = Left x
         eitherAssoc1 (Left (Right x)) = Right (Left x)
         eitherAssoc1 (Right x) = Right (Right x)
 
-        eitherAssoc2 : {a : Type} -> {b : Type} -> {c : Type} -> 
+        eitherAssoc2 : {a : Type} -> {b : Type} -> {c : Type} ->
                        Either a (Either b c) -> Either (Either a b) c
         eitherAssoc2 (Left x) = Left (Left x)
         eitherAssoc2 (Right (Left x)) = Left (Right x)
         eitherAssoc2 (Right (Right x)) = Right x
 
-        ok1 : {a : Type} -> {b : Type} -> {c : Type} -> 
+        ok1 : {a : Type} -> {b : Type} -> {c : Type} ->
               (x : Either a (Either b c)) -> eitherAssoc1 (eitherAssoc2 x) == x
         ok1 (Left x) = Refl
         ok1 (Right (Left x)) = Refl
         ok1 (Right (Right x)) = Refl
 
-        ok2 : {a : Type} -> {b : Type} -> {c : Type} -> 
+        ok2 : {a : Type} -> {b : Type} -> {c : Type} ->
               (x : Either (Either a b) c) -> eitherAssoc2 (eitherAssoc1 x) == x
         ok2 (Left (Left x)) = Refl
         ok2 (Left (Right x)) = Refl
         ok2 (Right x) = Refl
 
 -- ||| Disjunction with false is a no-op
-eitherBotLeft : {a : Type} -> 
+eitherBotLeft : {a : Type} ->
                 Iso (Either Void a) a
 eitherBotLeft = MkIso to from ok1 ok2
-  where to : {a : Type} -> 
+  where to : {a : Type} ->
              Either Void a -> a
         to (Left x) = void x
         to (Right x) = x
-        from : {a : Type} -> 
+        from : {a : Type} ->
                a -> Either Void a
         from = Right
-        ok1 : {a : Type} -> 
+        ok1 : {a : Type} ->
               (x : a) -> to (from x) == x
         ok1 x = Refl
-        ok2 : {a : Type} -> 
+        ok2 : {a : Type} ->
               (x : Either Void a) -> from (to x) == x
         ok2 (Left x) = void x
         ok2 (Right x) = Refl
 
 -- ||| Disjunction with false is a no-op
-eitherBotRight : {a : Type} -> 
+eitherBotRight : {a : Type} ->
                  Iso (Either a Void) a
 eitherBotRight = isoTrans eitherComm eitherBotLeft
 
 -- ||| Isomorphism is a congruence with regards to disjunction
-eitherCong : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} -> 
+eitherCong : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
              Iso a a' -> Iso b b' -> Iso (Either a b) (Either a' b')
 eitherCong {a = a} {a' = a'} {b = b} {b' = b'}
            (MkIso to from toFrom fromTo)
            (MkIso to' from' toFrom' fromTo') =
   MkIso (eitherMap to to') (eitherMap from from') ok1 ok2
-    where eitherMap : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} -> 
+    where eitherMap : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
                       (a -> a') -> (b -> b') -> Either a b -> Either a' b'
           eitherMap f g (Left x)  = Left (f x)
           eitherMap f g (Right x) = Right (g x)
           ok1 : (x : Either a' b') -> eitherMap to to' (eitherMap from from' x) == x
-          ok1 (Left x)  = cong (toFrom x)
-          ok1 (Right x) = cong (toFrom' x)
+          ok1 (Left x)  = cong {f = Left}  (toFrom x)
+          ok1 (Right x) = cong {f = Right} (toFrom' x)
           ok2 : (x : Either a b) -> eitherMap from from' (eitherMap to to' x) == x
-          ok2 (Left x)  = cong (fromTo x)
-          ok2 (Right x) = cong (fromTo' x)
+          ok2 (Left x)  = cong {f = Left}  (fromTo x)
+          ok2 (Right x) = cong {f = Right} (fromTo' x)
 
 -- ||| Isomorphism is a congruence with regards to disjunction on the left
-eitherCongLeft : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} -> 
+eitherCongLeft : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
                  Iso a a' -> Iso (Either a b) (Either a' b)
 eitherCongLeft i = eitherCong i isoRefl
 
 -- ||| Isomorphism is a congruence with regards to disjunction on the right
-eitherCongRight : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} -> 
+eitherCongRight : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
                   Iso b b' -> Iso (Either a b) (Either a b')
 eitherCongRight i = eitherCong isoRefl i
 
