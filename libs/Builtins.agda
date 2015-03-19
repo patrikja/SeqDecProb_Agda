@@ -12,3 +12,5 @@ data _×_ (a : Set) (b : Set) : Set where
 
 data Sigma (a : Type) (P : a -> Type) : Type where
     MkSigma : (x : a) -> (pf : P x) -> Sigma a P
+
+data Unit : Type where unit : Unit

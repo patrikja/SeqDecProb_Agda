@@ -29,3 +29,4 @@ sym : {a : Type} -> {b : Type} ->
       {x : a}    -> {y : b}    ->
       (x == y) -> (y == x)
 sym Refl = Refl
+

@@ -19,8 +19,8 @@ data Iso : Type -> Type -> Set1 where
 record Iso (a : Type) (b : Type) : Set1 where
   constructor MkIso
   field
-    to : a -> b
-    from : b -> a
+    to     : a -> b
+    from   : b -> a
     toFrom : (y : b) -> to (from y) == y
     fromTo : (x : a) -> from (to x) == x
 
@@ -157,98 +157,122 @@ pairComm = MkIso swap swap swapSwap swapSwap
                    (x : (a × b)) -> swap (swap x) == x
         swapSwap (x , y) = Refl
 
-{-
+
 -- ||| Conjunction is associative
-pairAssoc : Iso (a × (b × c)) ((a × b) × c)
+pairAssoc : {a : Type} -> {b : Type} -> {c : Type} ->
+            Iso (a × (b × c)) ((a × b) × c)
 pairAssoc = MkIso to from ok1 ok2
   where
-    to : (a × (b × c)) -> ((a × b) × c)
-    to (x, (y, z)) = ((x, y), z)
-    from : ((a × b) × c) -> (a × (b × c))
-    from ((x, y), z) = (x, (y, z))
-    ok1 : (x : ((a × b) × c)) -> to (from x) == x
-    ok1 ((x, y), z) = Refl
-    ok2 : (x : (a × (b × c))) -> from (to x) == x
-    ok2 (x, (y, z)) = Refl
+    to : {a : Type} -> {b : Type} -> {c : Type} ->
+         (a × (b × c)) -> ((a × b) × c)
+    to (x , (y , z)) = ((x , y) , z)
+    from : {a : Type} -> {b : Type} -> {c : Type} ->
+           ((a × b) × c) -> (a × (b × c))
+    from ((x , y) , z) = (x , (y , z))
+    ok1 : {a : Type} -> {b : Type} -> {c : Type} ->
+          (x : ((a × b) × c)) -> to (from x) == x
+    ok1 ((x , y) , z) = Refl
+    ok2 : {a : Type} -> {b : Type} -> {c : Type} ->
+          (x : (a × (b × c))) -> from (to x) == x
+    ok2 (x , (y , z)) = Refl
+
 
 -- ||| Conjunction with truth is a no-op
-pairUnitRight : Iso (a × ()) a
-pairUnitRight = MkIso fst (\x -> (x, ())) (\x -> Refl) ok
-  where ok : (x : (a × ())) -> (fst x, ()) == x
-        ok (x, ()) = Refl
+pairUnitRight : {a : Type} ->
+                Iso (a × Unit) a
+pairUnitRight = MkIso fst (\x -> (x , unit)) (\x -> Refl) ok
+  where ok : {a : Type} ->
+             (x : (a × Unit)) -> (fst x , unit) == x
+        ok (x , unit) = Refl
 
 -- ||| Conjunction with truth is a no-op
-pairUnitLeft : Iso (() × a) a
+pairUnitLeft : {a : Type} ->
+               Iso (Unit × a) a
 pairUnitLeft = isoTrans pairComm pairUnitRight
 
 -- ||| Conjunction preserves falsehood
-pairBotLeft : Iso (Void × a) Void
+pairBotLeft : {a : Type} ->
+              Iso (Void × a) Void
 pairBotLeft = MkIso fst void (\x -> void x) (\y -> void (fst y))
 
 -- ||| Conjunction preserves falsehood
-pairBotRight : Iso (a × Void) Void
+pairBotRight : {a : Type} ->
+               Iso (a × Void) Void
 pairBotRight = isoTrans pairComm pairBotLeft
 
+
+pairEq : {a : Type} -> {b : Type} ->
+         {x : a} -> {x' : a} -> {y : b} -> {y' : b} -> 
+         (x == x') -> (y == y') -> ((x , y) == (x' , y'))
+pairEq Refl Refl = Refl
+
+
 -- ||| Isomorphism is a congruence with regards to conjunction
-pairCong : Iso a a' -> Iso b b' -> Iso (a × b) (a' × b')
+pairCong : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
+           Iso a a' -> Iso b b' -> Iso (a × b) (a' × b')
 pairCong {a = a} {a' = a'} {b = b} {b' = b'}
-         (MkIso to from toFrom fromTo)
+         (MkIso to  from  toFrom  fromTo )
          (MkIso to' from' toFrom' fromTo') =
   MkIso to'' from'' iso1 iso2
-    where to'' : (a × b) -> (a' × b')
-          to'' (x, y) = (to x, to' y)
+    where to''   : (a  × b)  -> (a' × b')
+          to''     (x  , y)  =  (to x , to' y)
           from'' : (a' × b') -> (a × b)
-          from'' (x, y) = (from x, from' y)
-          iso1 : (x : (a' × b')) -> to'' (from'' x) == x
-          iso1 (x, y) = {! rewrite toFrom x in
-                           rewrite toFrom' y in
-                           Refl !}
+          from''   (x  , y)  =  (from x , from' y)
+          iso1 : (p : (a' × b')) -> to'' (from'' p) == p
+          iso1 (x , y) = pairEq (toFrom x) (toFrom' y)
           iso2 : (x : (a × b)) -> from'' (to'' x) == x
-          iso2 (x, y) = {! rewrite fromTo x in
-                           rewrite fromTo' y in
-                           Refl !}
+          iso2 (x , y) = pairEq (fromTo x) (fromTo' y)
+
 
 -- ||| Isomorphism is a congruence with regards to conjunction on the left
-pairCongLeft : Iso a a' -> Iso (a × b) (a' × b)
+pairCongLeft : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
+               Iso a a' -> Iso (a × b) (a' × b)
 pairCongLeft i = pairCong i isoRefl
 
+
 -- ||| Isomorphism is a congruence with regards to conjunction on the right
-pairCongRight : Iso b b' -> Iso (a × b) (a × b')
+pairCongRight : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
+                Iso b b' -> Iso (a × b) (a × b')
 pairCongRight = pairCong isoRefl
+
 
 -- Distributivity of products over sums
 -- ||| Products distribute over sums
-distribLeft : Iso (Either a b × c) (Either (a × c) (b × c))
-distribLeft = MkIso to from toFrom fromTo
+distribLeft : {a : Type} -> {b : Type} -> {c : Type} ->
+              Iso (Either a b × c) (Either (a × c) (b × c))
+distribLeft {a} {b} {c} = MkIso to from toFrom fromTo
   where to : (Either a b × c) -> Either (a × c) (b × c)
-        to (Left x, y) = Left (x, y)
-        to (Right x, y) = Right (x, y)
+        to (Left x  , y) = Left  (x , y)
+        to (Right x , y) = Right (x , y)
         from : Either (a × c) (b × c) -> (Either a b × c)
-        from (Left (x, y)) = (Left x, y)
-        from (Right (x, y)) = (Right x, y)
+        from (Left  (x , y)) = (Left x  , y)
+        from (Right (x , y)) = (Right x , y)
         toFrom : (x : Either (a × c) (b × c)) -> to (from x) == x
-        toFrom (Left (x, y)) = Refl
-        toFrom (Right (x, y)) = Refl
+        toFrom (Left  (x , y)) = Refl
+        toFrom (Right (x , y)) = Refl
         fromTo : (x : (Either a b × c)) -> from (to x) == x
-        fromTo (Left x, y) = Refl
-        fromTo (Right x, y) = Refl
+        fromTo (Left x  , y) = Refl
+        fromTo (Right x , y) = Refl
+
 
 -- ||| Products distribute over sums
-distribRight : Iso (a × Either b c) (Either (a × b) (a × c))
-distribRight {a} {b} {c} = (pairComm `isoTrans` distribLeft) `isoTrans` eitherCong pairComm pairComm
-
+distribRight : {a : Type} -> {b : Type} -> {c : Type} ->
+               Iso (a × Either b c) (Either (a × b) (a × c))
+distribRight {a} {b} {c} = (pairComm <> distribLeft) <> eitherCong pairComm pairComm
+  where _<>_ = isoTrans
 
 -- Enable preorder reasoning syntax over isomorphisms
 -- ||| Used for preorder reasoning syntax. Not intended for direct use.
 qed : (a : Type) -> Iso a a
 qed a = isoRefl
 
+
 -- ||| Used for preorder reasoning syntax. Not intended for direct use.
-step : (a : Type) -> Iso a b -> Iso b c -> Iso a c
+step : (a : Type) -> {b : Type} -> {c : Type} -> Iso a b -> Iso b c -> Iso a c
 step a iso1 iso2 = isoTrans iso1 iso2
 
 
-
+{-
 -- Isomorphisms over Maybe
 -- ||| Isomorphism is a congruence with respect to Maybe
 maybeCong : Iso a b -> Iso (Maybe a) (Maybe b)
@@ -338,15 +362,15 @@ eitherFinPlus {m = S k} {n=n} =
 
 finPairTimes : Iso (Fin m × Fin n) (Fin (m * n))
 finPairTimes {m = Z} {n=n} =
-  (Fin Z, Fin n) ={ pairCongLeft finZeroBot }=
-  (Void, Fin n)   ={ pairBotLeft             }=
+  (Fin Z , Fin n) ={ pairCongLeft finZeroBot }=
+  (Void , Fin n)   ={ pairBotLeft             }=
   Void            ={ isoSym finZeroBot       }=
   (Fin Z)        QED
 finPairTimes {m = S k} {n=n} =
-  (Fin (S k), Fin n)                  ={ pairCongLeft (isoSym maybeIsoS)      }=
-  (Maybe (Fin k), Fin n)              ={ pairCongLeft maybeEither             }=
-  (Either (Fin k) (), Fin n)          ={ distribLeft                          }=
-  (Either (Fin k, Fin n) ((), Fin n)) ={ eitherCong finPairTimes pairUnitLeft }=
+  (Fin (S k) , Fin n)                  ={ pairCongLeft (isoSym maybeIsoS)      }=
+  (Maybe (Fin k) , Fin n)              ={ pairCongLeft maybeEither             }=
+  (Either (Fin k) () , Fin n)          ={ distribLeft                          }=
+  (Either (Fin k , Fin n) (() , Fin n)) ={ eitherCong finPairTimes pairUnitLeft }=
   (Either (Fin (k * n)) (Fin n))      ={ eitherComm                           }=
   (Either (Fin n) (Fin (k * n)))      ={ eitherFinPlus                        }=
   (Fin (n + (k * n)))                 QED

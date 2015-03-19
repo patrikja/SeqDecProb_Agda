@@ -30,25 +30,42 @@ open import Prelude.Basics
 
 open Iso
 
+
+sigmaEq' : (A   : Type) -> (a : A) -> 
+           (B   : A → Type) ->
+           (B'  : A → Type) ->
+           (b   : B a) ->
+           (b'  : B' a) ->
+           (eqb : b == b') ->
+           MkSigma a b == MkSigma a b'
+sigmaEq' A a B B' b b' eqb = {!!} -- subst {!!} {!!} {!!}
+
+sigmaEq :  (A : Type) -> (A' : Type) ->
+           (a : A) -> (a' : A') -> (eqa : a == a') ->
+           (B : A -> Type) -> (B' : A' -> Type) -> 
+           (b : B a) -> (b' : B' a') -> (eqb : b == b') ->
+           MkSigma a b == MkSigma a' b'
+sigmaEq A .A a .a Refl B B' b b' eqb = {!!}
+
 sigmaIsoLemma :  (A : Type) -> (A' : Type) ->  (B : A -> Type) -> (B' : A' -> Type) ->
                  (isoA : Iso A A') ->
                  (isoBa  : (a : A) -> Iso (B a) (B' (to isoA a)) ) ->
                  Iso (Sigma A B) (Sigma A' B')
 sigmaIsoLemma A A' B B' isoA isoBa = MkIso toQ fromQ toFromQ fromToQ
    where toQ      : Sigma A  B  -> Sigma A' B'
-         toQ (MkSigma x pf) = MkSigma (to isoA x) (to (isoBa x) pf)
+         toQ (MkSigma a b) = MkSigma (to isoA a) (to (isoBa a) b)
 
          fromQ    : Sigma A' B' -> Sigma A  B
-         fromQ (MkSigma a' pf) = MkSigma a (from isoB B'a)
+         fromQ (MkSigma a' b') = MkSigma a (from isoB B'a)
             where  a : A
                    a = from isoA a'
                    isoB : Iso (B a) (B' (to isoA a))
                    isoB = isoBa a
                    B'a : B' (to isoA a)
-                   B'a = subst B' (sym (toFrom isoA a')) pf
+                   B'a = subst B' (sym (toFrom isoA a')) b'
 
          toFromQ  : (ab' : Sigma A' B') -> toQ (fromQ ab') == ab'
-         toFromQ = {!!}
+         toFromQ (MkSigma a' b') = {!!}
 --          toFromQ  (a' ** b') = trans s1 (trans s2 s3) where
 --            s1 : toQ (fromQ (a' ** b'))
 --                 =
