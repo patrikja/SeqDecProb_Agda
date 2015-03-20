@@ -30,23 +30,22 @@ open import Prelude.Basics
 
 open Iso
 
-{-
-sigmaEq' : (A   : Type) -> (a : A) -> 
-           (B   : A → Type) ->
-           (B'  : A → Type) ->
-           (b   : B a) ->
-           (b'  : B' a) ->
-           (eqb : b == b') ->
-           MkSigma {A} {B} a b == MkSigma {A} {B'} a b'
-sigmaEq' A a B B' b b' eqb = {!!} 
+
+sigmaEqB : (A   : Type) -> (a : A) ->
+            (B   : A → Type) ->
+            (b   : B a) ->
+            (b'  : B a) ->
+            (eqb : b == b') ->
+            MkSigma {A} {B} a b == MkSigma {A} {B} a b'
+sigmaEqB A a B b .b Refl = Refl
 
 sigmaEq :  (A : Type) -> (A' : Type) ->
            (a : A) -> (a' : A') -> (eqa : a == a') ->
-           (B : A -> Type) -> (B' : A' -> Type) -> 
+           -- In the implementation we know that A == A' from here on
+           (B : A -> Type) -> (B' : A' -> Type) ->
            (b : B a) -> (b' : B' a') -> (eqb : b == b') ->
            MkSigma {A} {B} a b == MkSigma {A'} {B'} a' b'
 sigmaEq A .A a .a Refl B B' b b' eqb = {!!}
--}
 
 sigmaIsoLemma :  (A : Type) -> (A' : Type) ->  (B : A -> Type) -> (B' : A' -> Type) ->
                  (isoA : Iso A A') ->
@@ -66,7 +65,16 @@ sigmaIsoLemma A A' B B' isoA isoBa = MkIso toQ fromQ toFromQ fromToQ
                    B'a = subst B' (sym (toFrom isoA a')) b'
 
          toFromQ  : (ab' : Sigma A' B') -> toQ (fromQ ab') == ab'
-         toFromQ (MkSigma a' b') = {!!}
+         toFromQ (MkSigma a' b') = toQ (fromQ (MkSigma a' b'))      ==< Refl >==
+                                   toQ (MkSigma a (from isoB B'a))  ==< Refl >==
+                                   MkSigma (to isoA a) (to isoB (from isoB B'a))  ==< {!!} >==
+                                   MkSigma a' b'                    QED
+           where   a : A
+                   a = from isoA a'
+                   isoB : Iso (B a) (B' (to isoA a))
+                   isoB = isoBa a
+                   B'a : B' (to isoA a)
+                   B'a = subst B' (sym (toFrom isoA a')) b'
 --          toFromQ  (a' ** b') = trans s1 (trans s2 s3) where
 --            s1 : toQ (fromQ (a' ** b'))
 --                 =

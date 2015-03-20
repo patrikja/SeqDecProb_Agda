@@ -19,8 +19,12 @@ _QED = qed
 -- is a proof that foo is related to fnord, with the intermediate step being bar, justified by prf and prf'
 syntax [from] "={" [prf] "}=" [to] = step from prf to
 -}
+
+infixr 2 _==<_>==_
+
 _==<_>==_ = step
 
+infix  2 _QED
 
 subst : forall {a} {l} {A : Set a} (P : A → Set l) {x y : A} -> x == y -> P x -> P y
 subst P Refl p = p
