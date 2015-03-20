@@ -30,22 +30,23 @@ open import Prelude.Basics
 
 open Iso
 
-
+{-
 sigmaEq' : (A   : Type) -> (a : A) -> 
            (B   : A → Type) ->
            (B'  : A → Type) ->
            (b   : B a) ->
            (b'  : B' a) ->
            (eqb : b == b') ->
-           MkSigma a b == MkSigma a b'
-sigmaEq' A a B B' b b' eqb = {!!} -- subst {!!} {!!} {!!}
+           MkSigma {A} {B} a b == MkSigma {A} {B'} a b'
+sigmaEq' A a B B' b b' eqb = {!!} 
 
 sigmaEq :  (A : Type) -> (A' : Type) ->
            (a : A) -> (a' : A') -> (eqa : a == a') ->
            (B : A -> Type) -> (B' : A' -> Type) -> 
            (b : B a) -> (b' : B' a') -> (eqb : b == b') ->
-           MkSigma a b == MkSigma a' b'
+           MkSigma {A} {B} a b == MkSigma {A'} {B'} a' b'
 sigmaEq A .A a .a Refl B B' b b' eqb = {!!}
+-}
 
 sigmaIsoLemma :  (A : Type) -> (A' : Type) ->  (B : A -> Type) -> (B' : A' -> Type) ->
                  (isoA : Iso A A') ->

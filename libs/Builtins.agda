@@ -10,7 +10,13 @@ void ()
 data _×_ (a : Set) (b : Set) : Set where
   _,_ : a -> b -> a × b
 
-data Sigma (a : Type) (P : a -> Type) : Type where
-    MkSigma : (x : a) -> (pf : P x) -> Sigma a P
+record Sigma (a : Type) (P : a -> Type) : Type where
+    constructor MkSigma
+    field
+      x : a
+      pf : P x
+
+-- data Sigma (a : Type) (P : a -> Type) : Type where
+--    MkSigma : (x : a) -> (pf : P x) -> Sigma a P
 
 data Unit : Type where unit : Unit
