@@ -32,12 +32,12 @@ snd : {a : Type} -> {b : Type} ->
       (a × b) -> b
 snd (x , y) = y
 
-infixl 9 _·_
+infixl 9 _∘_
 
 -- ||| Function composition
-_·_ : {a : Type} -> {b : Type} -> {c : Type} -> 
+_∘_ : {a : Type} -> {b : Type} -> {c : Type} -> 
       (b -> c) -> (a -> b) -> a -> c
-_·_ f g x = f (g x)
+_∘_ f g x = f (g x)
 
 -- ||| Takes in the first two arguments in reverse order.
 -- ||| @ f the function to flip
@@ -55,6 +55,8 @@ cong : {t : Type} -> {u : Type} ->
        {f : t -> u} -> {a : t} -> {b : t} -> 
                        (a == b) -> f a == f b
 cong Refl = Refl
+-- A stronger heterogenous variant of cong would be useful sometimes.
+-- See ../Syntax/PreorderReasoning.agda
 
 -- ||| Decidability. A decidable property either holds or is a contradiction.
 data Dec : Type -> Set1 where

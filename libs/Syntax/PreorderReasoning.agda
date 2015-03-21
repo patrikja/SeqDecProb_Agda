@@ -4,10 +4,12 @@ open import Builtins
 data _==_  {l} {a : Set l} (x : a) : {b : Set l} -> (y : b) -> Set where
   Refl : x == x
 
-module Equal {a : Type} where
-    qed : (x : a) -> x == x
+module Equal where
+    qed : {a : Type} -> 
+          (x : a) -> x == x
     qed x = Refl
-    step : {y : a} -> {z : a} -> (x : a) -> x == y -> (y == z) -> x == z
+    step : {a : Type} -> {b : Type} -> {c : Type} ->
+           {y : b} -> {z : c} -> (x : a) -> x == y -> (y == z) -> x == z
     step x Refl Refl = Refl
 
 open Equal
@@ -29,8 +31,24 @@ infix  2 _QED
 subst : forall {a} {l} {A : Set a} (P : A → Set l) {x y : A} -> x == y -> P x -> P y
 subst P Refl p = p
 
+substEq : forall {a} {l} {A : Set a} (P : A → Set l) {x y : A} -> (eq : x == y) -> (p : P x) -> subst P eq p == p
+substEq P Refl p = Refl
+
 sym : {a : Type} -> {b : Type} ->
       {x : a}    -> {y : b}    ->
       (x == y) -> (y == x)
 sym Refl = Refl
 
+trans : {a : Type} -> {b : Type} -> {c : Type} ->
+        {x : a}    -> {y : b}    -> {z : c}    ->
+        (x == y)   -> (y == z)   -> (x == z)
+trans Refl Refl = Refl
+
+-- Perhaps needed
+hcong' : forall {α} {β} {γ} -> {I : Set α} {i j : I} -> 
+          (A : I -> Set β) {B : {k : I} -> A k -> Set γ} {x : A i} {y : A j}
+       -> i == j
+       -> (f : {k : I} -> (x : A k) -> B x)
+       -> x == y
+       -> f x == f y
+hcong' _ Refl _ Refl = Refl

@@ -13,5 +13,5 @@ Some differences:
 | Idris | Agda | Comment |
 | ----- | ---- | ------- |
 | \ =>  | \ -> |         |
-| (.)   | _·_  | The period is a reserved character in Agda. The middle dot is on my keyboard AltGr-. |
+| (.)   | _∘_  | The period is a reserved character in Agda. I follow the agda-stdlib and use the unicode RING OPERATOR here. (An alternative would be the middle dot which on my keyboard is AltGr-.) |
 | Implicitly implicit lower case arguments | Explicitly implicit arguments. |
