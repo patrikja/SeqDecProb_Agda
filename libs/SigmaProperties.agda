@@ -30,6 +30,13 @@ open import Prelude.Basics
 
 open Iso
 
+{-
+sigmaEqA : (A   : Type) ->
+           (a : A) -> (a' : A) -> (a == a') ->
+           (B   : A → Type) ->
+           (b   : B a) -> (b'  : B a') -> (eqb : b == b') ->
+           MkSigma {A} {B} a b == MkSigma {A} {B} a' b'
+sigmaEqA A a .a Refl B b .b Refl = Refl
 
 sigmaEqB : (A   : Type) -> (a : A) ->
             (B   : A → Type) ->
@@ -39,6 +46,7 @@ sigmaEqB : (A   : Type) -> (a : A) ->
             MkSigma {A} {B} a b == MkSigma {A} {B} a b'
 sigmaEqB A a B b .b Refl = Refl
 
+
 sigmaEq :  (A : Type) -> (A' : Type) ->
            (a : A) -> (a' : A') -> (eqa : a == a') ->
            -- In the implementation we know that A == A' from here on
@@ -46,6 +54,16 @@ sigmaEq :  (A : Type) -> (A' : Type) ->
            (b : B a) -> (b' : B' a') -> (eqb : b == b') ->
            MkSigma {A} {B} a b == MkSigma {A'} {B'} a' b'
 sigmaEq A .A a .a Refl B B' b b' eqb = {!!}
+-}
+
+sigmaEqLemma2 : {A  : Type} ->
+                {P  : A -> Type} ->
+                {s1 : Sigma A P} ->
+                {s2 : Sigma A P} ->
+                Sigma.x s1 == Sigma.x s2 ->
+                Sigma.pf s1 == Sigma.pf s2 ->
+                s1 == s2
+sigmaEqLemma2 {s1 = MkSigma x pf} {MkSigma .x .pf} Refl Refl = Refl
 
 sigmaIsoLemma :  (A : Type) -> (A' : Type) ->  (B : A -> Type) -> (B' : A' -> Type) ->
                  (isoA : Iso A A') ->
@@ -65,37 +83,47 @@ sigmaIsoLemma A A' B B' isoA isoBa = MkIso toQ fromQ toFromQ fromToQ
                    B'a = subst B' (sym (toFrom isoA a')) b'
 
          toFromQ  : (ab' : Sigma A' B') -> toQ (fromQ ab') == ab'
-         toFromQ (MkSigma a' b') = toQ (fromQ (MkSigma a' b'))      ==< Refl >==
-                                   toQ (MkSigma a (from isoB B'a))  ==< Refl >==
-                                   MkSigma (to isoA a) (to isoB (from isoB B'a))  ==< {!!} >==
-                                   MkSigma a' b'                    QED
-           where   a : A
-                   a = from isoA a'
-                   isoB : Iso (B a) (B' (to isoA a))
+         toFromQ (MkSigma a' b') = toQ (fromQ (MkSigma a' b'))  ==< Refl >==
+                                   toQ (MkSigma a (fromB B'a))  ==< Refl >==
+                                   MkSigma (toA (fromA a'))
+                                           (toB (fromB B'a))    ==< sigmaEqLemma2 (toFrom isoA a') toFromb' >==
+                                   MkSigma a' b'                QED
+                    -- sigmaEqA A' (toA a) a' (toFrom isoA a') B' {!!} b' {!!}
+           where   toA    = to    isoA
+                   fromA  = from  isoA
+                   a : A
+                   a = fromA a'
+                   isoB : Iso (B a) (B' (toA a))
                    isoB = isoBa a
-                   B'a : B' (to isoA a)
-                   B'a = subst B' (sym (toFrom isoA a')) b'
+                   toB    = to    isoB
+                   fromB  = from  isoB
+                   toFroma' : toA (fromA a') == a'
+                   toFroma' = toFrom isoA a'
+                   B'a : B' (toA a)
+                   B'a = subst B' (sym toFroma') b'
+                   toFromb' : toB (fromB B'a) == b'
+                   toFromb' = {!!}
 --          toFromQ  (a' ** b') = trans s1 (trans s2 s3) where
 --            s1 : toQ (fromQ (a' ** b'))
 --                 =
---                 toQ (from isoA a' ** from (isoBa (from isoA a')) (replace (sym (toFrom isoA a')) b'))
+--                 toQ (fromA a' ** from (isoBa (fromA a')) (replace (sym (toFrom isoA a')) b'))
 --            s1 = Refl
---            s2 : toQ (from isoA a' ** from (isoBa (from isoA a')) (replace (sym (toFrom isoA a')) b'))
+--            s2 : toQ (fromA a' ** from (isoBa (fromA a')) (replace (sym (toFrom isoA a')) b'))
 --                 =
---                 (to isoA (from isoA a')
+--                 (toA (fromA a')
 --                  **
---                  to (isoBa (from isoA a')) (from (isoBa (from isoA a')) (replace (sym (toFrom isoA a')) b'))
+--                  to (isoBa (fromA a')) (from (isoBa (fromA a')) (replace (sym (toFrom isoA a')) b'))
 --                 )
 --            s2 = Refl
---            s3 : (to isoA (from isoA a')
+--            s3 : (toA (fromA a')
 --                  **
---                  to (isoBa (from isoA a')) (from (isoBa (from isoA a')) (replace (sym (toFrom isoA a')) b'))
+--                  to (isoBa (fromA a')) (from (isoBa (fromA a')) (replace (sym (toFrom isoA a')) b'))
 --                 )
 --                 =
 --                 (a' ** b')
---            s3 = sigmaEqLemma2 {s1 = (to isoA (from isoA a')
+--            s3 = sigmaEqLemma2 {s1 = (toA (fromA a')
 --                                      **
---                                      to (isoBa (from isoA a')) (from (isoBa (from isoA a')) (replace (sym (toFrom isoA a')) b'))
+--                                      to (isoBa (fromA a')) (from (isoBa (fromA a')) (replace (sym (toFrom isoA a')) b'))
 --                                     )}
 --                               {s2 = (a' ** b')}
 --                               (toFrom isoA a')
@@ -106,22 +134,22 @@ sigmaIsoLemma A A' B B' isoA isoBa = MkIso toQ fromQ toFromQ fromToQ
 --          fromToQ (a ** b) = trans s1 (trans s2 s3) where
 --            s1 : fromQ (toQ (a ** b))
 --                 =
---                 fromQ (to isoA a ** to (isoBa a) b)
+--                 fromQ (toA a ** to (isoBa a) b)
 --            s1 = Refl
---            s2 : fromQ (to isoA a ** to (isoBa a) b)
+--            s2 : fromQ (toA a ** to (isoBa a) b)
 --                 =
---                 (from isoA (to isoA a)
+--                 (fromA (toA a)
 --                  **
---                  from (isoBa (from isoA (to isoA a))) (replace (sym (toFrom isoA (to isoA a))) (to (isoBa a) b)))
+--                  from (isoBa (fromA (toA a))) (replace (sym (toFrom isoA (toA a))) (to (isoBa a) b)))
 --            s2 = Refl
---            s3 : (from isoA (to isoA a)
+--            s3 : (fromA (toA a)
 --                  **
---                  from (isoBa (from isoA (to isoA a))) (replace (sym (toFrom isoA (to isoA a))) (to (isoBa a) b)))
+--                  from (isoBa (fromA (toA a))) (replace (sym (toFrom isoA (toA a))) (to (isoBa a) b)))
 --                 =
 --                 (a ** b)
---            s3 = sigmaEqLemma2 {s1 = (from isoA (to isoA a)
+--            s3 = sigmaEqLemma2 {s1 = (fromA (toA a)
 --                                      **
---                                      from (isoBa (from isoA (to isoA a))) (replace (sym (toFrom isoA (to isoA a))) (to (isoBa a) b))
+--                                      from (isoBa (fromA (toA a))) (replace (sym (toFrom isoA (toA a))) (to (isoBa a) b))
 --                                     )}
 --                               {s2 = (a ** b)}
 --                               (fromTo isoA a)
