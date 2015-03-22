@@ -30,12 +30,10 @@ open import Prelude.Basics
 
 open Iso
 
-sigmaEqLemma2 : {A  : Type} ->
-                {P  : A -> Type} ->
-                {s1 : Sigma A P} ->
-                {s2 : Sigma A P} ->
-                Sigma.x s1 == Sigma.x s2 ->
-                Sigma.pf s1 == Sigma.pf s2 ->
+sigmaEqLemma2 : {A : Type} -> {P : A -> Type} ->
+                {s1 : Sigma A P} -> {s2 : Sigma A P} ->
+                Sigma.x  s1  ==  Sigma.x  s2 ->
+                Sigma.pf s1  ==  Sigma.pf s2 ->
                 s1 == s2
 sigmaEqLemma2 {s1 = MkSigma a b} {MkSigma .a .b} Refl Refl = Refl
 
@@ -65,9 +63,9 @@ sigmaIsoLemma A A' B B' isoA isoB = MkIso toAB fromAB toFromAB fromToAB
          toFromAB (MkSigma a' b') = sigmaEqLemma2 (toFrom isoA a') toFromb'
 {-
          toFromAB (MkSigma a' b') = toAB (fromAB (MkSigma a' b'))  ==< Refl >==
-                                    toAB (MkSigma a (fromBa b''))   ==< Refl >==
+                                    toAB (MkSigma a (fromBa b''))  ==< Refl >==
                                     MkSigma (toA (fromA a'))
-                                            (toBa (fromBa b''))      ==< sigmaEqLemma2 (toFrom isoA a') toFromb' >==
+                                            (toBa (fromBa b''))    ==< sigmaEqLemma2 (toFrom isoA a') toFromb' >==
                                     MkSigma a' b'                QED
 -}
            where   a : A
@@ -87,49 +85,27 @@ sigmaIsoLemma A A' B B' isoA isoB = MkIso toAB fromAB toFromAB fromToAB
                                 ==< substEq B' (sym toFroma') b' >==
                               b' QED
 
-
          fromToAB : (ab  : Sigma A  B) -> fromAB (toAB ab) == ab
-         fromToAB (MkSigma a b) = sigmaEqLemma2 (fromTo isoA a) q
+         fromToAB (MkSigma a b) = sigmaEqLemma2 (fromTo isoA a) lem
            where a' = toA a
                  b' = toB a b
                  a'' = fromA a'
-                 b'' : B' (toA a'')
-                 b'' = subst B' (sym (toFrom isoA a')) b'
-                 eqb'' : b'' == b'
+                 eqa : a'' == a
+                 eqa = fromTo isoA a
+                 b''    : B' (toA a'')
+                 b''    = subst   B' (sym (toFrom isoA a')) b'
+                 eqb''  : b'' == b'
                  eqb''  = substEq B' (sym (toFrom isoA a')) b'
-                 q   = Sigma.pf (fromAB (toAB (MkSigma a b)))
+                 lem = Sigma.pf (fromAB (toAB (MkSigma a b)))
                          ==< Refl >==
                        Sigma.pf (fromAB (MkSigma (toA a) (toB a b)))
                          ==< Refl >==
                        Sigma.pf (MkSigma {A} {B} a'' (fromB a'' b'') )
                          ==< Refl >==
                        fromB a'' b''
-                         ==< {! change b'' into n "inside" fromB a''!} >==
-                       {!!}
-                         ==< {!!} >==
+                         ==< cong2 fromB eqa eqb'' >==
+                       fromB a b'
+                         ==< Refl >==
+                       fromB a (toB a b)
+                         ==< fromTo (isoB a) b >==
                        b QED
---                 (isoB  : (a : A) -> Iso (B a) (B' (toA a)) ) ->
-
---          fromToAB (a ** b) = trans s1 (trans s2 s3) where
---            s1 : fromAB (toAB (a ** b))
---                 =
---                 fromAB (toA a ** to (isoB a) b)
---            s1 = Refl
---            s2 : fromAB (toA a ** to (isoB a) b)
---                 =
---                 (fromA (toA a)
---                  **
---                  from (isoB (fromA (toA a))) (replace (sym (toFrom isoA (toA a))) (to (isoB a) b)))
---            s2 = Refl
---            s3 : (fromA (toA a)
---                  **
---                  from (isoB (fromA (toA a))) (replace (sym (toFrom isoA (toA a))) (to (isoB a) b)))
---                 =
---                 (a ** b)
---            s3 = sigmaEqLemma2 {s1 = (fromA (toA a)
---                                      **
---                                      from (isoB (fromA (toA a))) (replace (sym (toFrom isoA (toA a))) (to (isoB a) b))
---                                     )}
---                               {s2 = (a ** b)}
---                               (fromTo isoA a)
---                               (isoReplaceLemma2 isoA isoB a b)
