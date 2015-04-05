@@ -9,6 +9,10 @@ This directory contains a libs from both "base" and "prelude".
 TODO: It might be easier to add syntax compatibility layers to Agda or
 Idris instead of doing this by hand.
 
+(This code is derived from the
+[Idris-dev git-repo](https://github.com/idris-lang/Idris-dev) with the
+following [License](Idris/LICENSE).)
+
 Some differences:
 | Idris | Agda | Comment |
 | ----- | ---- | ------- |
