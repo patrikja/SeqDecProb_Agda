@@ -1,7 +1,9 @@
 module Data.VectType where
 open import Builtins
-open import Data.Bool
-open import Idris.Data.Nat
+open import Prelude.Basics
+open import Prelude.Maybe
+open import Idris.Prelude.Bool
+open import Idris.Data.Nat  -- TODO: use the real Idris.Prelude.Nat
 open import Syntax.PreorderReasoning
 -- TODO: pick a good naming for Idris' = and ==: Currently we have renamed = in Idris to == in Agda (because = is reserved) but not figured out another name for ==
 open import Idris.Data.Fin using (Fin; FZ; FS)
@@ -13,11 +15,16 @@ module Vect where
 
   infixr 7 _::_
 
-  data Vect : Nat -> Type -> Type where
-    Nil  : {a : Type} -> Vect Z a
-    _::_ : {a : Type} -> {n : Nat} -> (x : a) -> (xs : Vect n a) -> Vect (S n) a
+  data VectImpl (a : Type) : (n : Nat) -> Type where
+    []   : VectImpl a Z
+    _::_ : {n : Nat} -> (x : a) -> (xs : VectImpl a n) -> VectImpl a (S n)
 
-  [] = Nil
+  Vect = \n -> \a -> VectImpl a n
+
+  -- TODO: make Agda allow pattern synonyms (using the syntax directive?)
+  -- syntax Nil = []
+  [_] : {a : Type} -> a -> Vect 1 a
+  [ x ] = x :: []
 
   -- Hints for interactive editing
 --  %name Vect xs,ys,zs,ws
@@ -80,15 +87,15 @@ module Vect where
              Fin (S n) -> a -> Vect n a -> Vect (S n) a
   insertAt FZ     y xs        = y :: xs
   insertAt (FS k) y (x :: xs) = x :: insertAt k y xs
-  insertAt (FS k) y []        = void k -- TODO absurd k
+  insertAt (FS k) y []        = {! void k !} -- TODO absurd k
 
   -- ||| Construct a new vector consisting of all but the indicated element
   deleteAt : {a : Type} -> {n : Nat} ->
              Fin (S n) -> Vect (S n) a -> Vect n a
   deleteAt           FZ     (x :: xs) = xs
   deleteAt {n = S m} (FS k) (x :: xs) = x :: deleteAt k xs
-  deleteAt {n = Z}   (FS k) (x :: xs) = void k -- TODO absurd k
-  deleteAt           _      []      impossible
+  deleteAt {n = Z}   (FS k) (x :: xs) = {! void k !} -- TODO absurd k
+--  deleteAt           _      []      impossible
 
   -- ||| Replace an element at a particlar index with another
   replaceAt : {t : Type} -> {n : Nat} ->
@@ -229,29 +236,34 @@ module Vect where
   zipWith f (x :: xs) (y :: ys) = f x y :: zipWith f xs ys
 
   -- ||| Combine three equal-length vectors into a vector with some function
-  zipWith3 : (a -> b -> c -> d) -> Vect n a -> Vect n b -> Vect n c -> Vect n d
+  zipWith3 : {a : Type} -> {b : Type} -> {c : Type} -> {d : Type} -> {n : Nat} ->
+             (a -> b -> c -> d) -> Vect n a -> Vect n b -> Vect n c -> Vect n d
   zipWith3 f []      []      []      = []
   zipWith3 f (x :: xs) (y :: ys) (z :: zs) = f x y z :: zipWith3 f xs ys zs
 
   -- ||| Combine two equal-length vectors pairwise
-  zip : Vect n a -> Vect n b -> Vect n (a, b)
-  zip = zipWith (\x y -> (x,y))
+  zip : {a : Type} -> {b : Type} -> {n : Nat} ->
+        Vect n a -> Vect n b -> Vect n (a × b)
+  zip = zipWith (\x y -> (x , y))
 
   -- ||| Combine three equal-length vectors elementwise into a vector of tuples
-  zip3 : Vect n a -> Vect n b -> Vect n c -> Vect n (a, b, c)
-  zip3 = zipWith3 (\x y z -> (x,y,z))
+  zip3 : {a : Type} -> {b : Type} -> {c : Type} -> {n : Nat} ->
+         Vect n a -> Vect n b -> Vect n c -> Vect n (a × (b × c))
+  zip3 = zipWith3 (\x y z -> (x , (y , z)))
 
   -- ||| Convert a vector of pairs to a pair of vectors
-  unzip : Vect n (a, b) -> (Vect n a, Vect n b)
-  unzip []           = ([], [])
-  unzip ((l, r) :: xs) with (unzip xs)
-  ... | (lefts, rights) = (l :: lefts, r :: rights)
+  unzip : {a : Type} -> {b : Type} -> {n : Nat} ->
+          Vect n (a × b) -> (Vect n a) × (Vect n b)
+  unzip []           = ([] , [])
+  unzip ((l , r) :: xs) with (unzip xs)
+  ... | (lefts , rights) = (l :: lefts) , (r :: rights)
 
   -- ||| Convert a vector of three-tuples to a triplet of vectors
-  unzip3 : Vect n (a, b, c) -> (Vect n a, Vect n b, Vect n c)
-  unzip3 []            = ([], [], [])
-  unzip3 ((l,c,r) :: xs) with (unzip3 xs)
-  ...  | (lefts, centers, rights) = (l :: lefts, c :: centers, r :: rights)
+  unzip3 : {a : Type} -> {b : Type} -> {c : Type} -> {n : Nat} ->
+           Vect n (a × (b × c)) -> (Vect n a × (Vect n b × Vect n c))
+  unzip3 []            = ([] , ([] , []))
+  unzip3 ((l , (c , r)) :: xs) with (unzip3 xs)
+  ...  | (lefts , (centers , rights)) = (l :: lefts) , ((c :: centers) , (r :: rights))
 
   --------------------------------------------------------------------------------
   -- Equality
@@ -300,22 +312,21 @@ module Vect where
   -- |||
   -- ||| @ f the partial function (expressed by returning `Maybe`)
   -- ||| @ xs the vector to check for results
-  mapMaybe : (f : a -> Maybe b) -> (xs : Vect n a) -> (Sigma Nat (\m -> Vect m b))
-  mapMaybe f []      = MkSigma _ []
-  mapMaybe f (x :: xs) =
-    let MkSigma len ys = mapMaybe f xs
-    in case f x of
-         Just y  -> MkSigma (S len) (y :: ys)
-         Nothing -> MkSigma (  len) (     ys)
-
+  mapMaybe : {a : Type} -> {b : Type} -> {n : Nat} ->
+             (f : a -> Maybe b) -> (xs : Vect n a) -> (Sigma Nat (\m -> Vect m b))
+  mapMaybe f []         = MkSigma _ []
+  mapMaybe f (x :: xs) with f x | mapMaybe f xs
+  ... | Just y  | MkSigma len ys = MkSigma (S len) (y :: ys)
+  ... | Nothing | MkSigma len ys = MkSigma (  len) (     ys)
 
   --------------------------------------------------------------------------------
   -- Folds
   --------------------------------------------------------------------------------
 
-  foldrImpl : (t -> acc -> acc) -> acc -> (acc -> acc) -> Vect n t -> acc
+  foldrImpl : {t : Type} -> {acc : Type} -> {n : Nat} ->
+              (t -> acc -> acc) -> acc -> (acc -> acc) -> Vect n t -> acc
   foldrImpl f e go [] = go e
-  foldrImpl f e go (x :: xs) = foldrImpl f e (go . (f x)) xs
+  foldrImpl f e go (x :: xs) = foldrImpl f e (go ∘ (f x)) xs
 
 {- TODO
   instance Foldable (Vect n) where
@@ -327,23 +338,30 @@ module Vect where
   --------------------------------------------------------------------------------
 
   -- ||| Flatten a vector of equal-length vectors
-  concat : Vect m (Vect n a) -> Vect (m * n) a
+  concat : {a : Type} -> {m : Nat} -> {n : Nat} ->
+           Vect m (Vect n a) -> Vect (m * n) a
   concat []      = []
   concat (v :: vs) = v ++ concat vs
 
+{- TODO
   -- ||| Foldr without seeding the accumulator
-  foldr1 : (t -> t -> t) -> Vect (S n) t -> t
-  foldr1 f (x :: xs) = foldr f x xs
+  foldr1 : {t : Type} -> {n : Nat} ->
+           (t -> t -> t) -> Vect (S n) t -> t
+  foldr1 f (x :: xs) = foldrImpl f x xs
+
 
   -- ||| Foldl without seeding the accumulator
-  foldl1 : (t -> t -> t) -> Vect (S n) t -> t
+  foldl1 : {t : Type} -> {n : Type} ->
+           (t -> t -> t) -> Vect (S n) t -> t
   foldl1 f (x :: xs) = foldl f x xs
+-}
   --------------------------------------------------------------------------------
   -- Scans
   --------------------------------------------------------------------------------
 
-  scanl : (b -> a -> b) -> b -> Vect n a -> Vect (S n) b
-  scanl f q []      = [q]
+  scanl : {a : Type} -> {b : Type} -> {n : Nat} ->
+          (b -> a -> b) -> b -> Vect n a -> Vect (S n) b
+  scanl f q []      = [ q ]
   scanl f q (x :: xs) = q :: scanl f (f q x) xs
 
   --------------------------------------------------------------------------------
@@ -354,7 +372,8 @@ module Vect where
   -- ||| @ p the equality test
   -- ||| @ e the item to search for
   -- ||| @ xs the vector to search in
-  elemBy : (p : a -> a -> Bool) -> (e : a) -> (xs : Vect n a) -> Bool
+  elemBy : {a : Type} -> {n : Nat} ->
+           (p : a -> a -> Bool) -> (e : a) -> (xs : Vect n a) -> Bool
   elemBy p e []      = False
   elemBy p e (x :: xs) with (p e x)
   ...  | True  = True
@@ -370,9 +389,10 @@ module Vect where
   -- ||| Find the association of some key with a user-provided comparison
   -- ||| @ p the comparison operator for keys (True if they match)
   -- ||| @ e the key to look for
-  lookupBy : (p : a -> a -> Bool) -> (e : a) -> (xs : Vect n (a, b)) -> Maybe b
+  lookupBy : {a : Type} -> {b : Type} -> {n : Nat} ->
+             (p : a -> a -> Bool) -> (e : a) -> (xs : Vect n (a × b)) -> Maybe b
   lookupBy p e []           = Nothing
-  lookupBy p e ((l, r) :: xs) with (p e l)
+  lookupBy p e ((l , r) :: xs) with (p e l)
   ... | True  = Just r
   ... | False = lookupBy p e xs
 
@@ -386,7 +406,8 @@ module Vect where
   -- ||| @ p the comparison operator
   -- ||| @ elems the vector to search
   -- ||| @ xs what to search for
-  hasAnyBy : (p : a -> a -> Bool) -> (elems : Vect m a) -> (xs : Vect n a) -> Bool
+  hasAnyBy : {a : Type} -> {m : Nat} -> {n : Nat} ->
+             (p : a -> a -> Bool) -> (elems : Vect m a) -> (xs : Vect n a) -> Bool
   hasAnyBy p elems []      = False
   hasAnyBy p elems (x :: xs) with (elemBy p x elems)
   ... | True  = True
@@ -403,45 +424,52 @@ module Vect where
 
   -- ||| Find the first element of the vector that satisfies some test
   -- ||| @ p the test to satisfy
-  find : (p : a -> Bool) -> (xs : Vect n a) -> Maybe a
+  find : {a : Type} -> {n : Nat} ->
+         (p : a -> Bool) -> (xs : Vect n a) -> Maybe a
   find p []      = Nothing
   find p (x :: xs) with (p x)
   ... | True  = Just x
   ... | False = find p xs
 
   -- ||| Find the index of the first element of the vector that satisfies some test
-  findIndex : (a -> Bool) -> Vect n a -> Maybe Nat
+  findIndex : {a : Type} -> {n : Nat} ->
+              (a -> Bool) -> Vect n a -> Maybe Nat
   findIndex = findIndex' 0
     where
-      findIndex' : Nat -> (a -> Bool) -> Vect n a -> Maybe Nat
+      findIndex' : {a : Type} -> {n : Nat} ->
+                   Nat -> (a -> Bool) -> Vect n a -> Maybe Nat
       findIndex' cnt p []      = Nothing
       findIndex' cnt p (x :: xs) with (p x)
-        | True  = Just cnt
-        | False = findIndex' (S cnt) p xs
+      ...  | True  = Just cnt
+      ...  | False = findIndex' (S cnt) p xs
 
   -- ||| Find the indices of all elements that satisfy some test
-  findIndices : (a -> Bool) -> Vect m a -> (p ** Vect p Nat)
+  findIndices : {a : Type} -> {m : Nat} ->
+                (a -> Bool) -> Vect m a -> Sigma Nat (\p -> Vect p Nat)
   findIndices = findIndices' 0
     where
-      total findIndices' : Nat -> (a -> Bool) -> Vect m a -> (p ** Vect p Nat)
-      findIndices' cnt p []      = (_ ** [])
+      findIndices' : {a : Type} -> {m : Nat} ->
+                     Nat -> (a -> Bool) -> Vect m a -> Sigma Nat (\p -> Vect p Nat)
+      findIndices' cnt p []      = MkSigma _ []
       findIndices' cnt p (x :: xs) with (findIndices' (S cnt) p xs)
-        | (_ ** tail) =
+      ... | MkSigma _ tail =
          if p x then
-          (_ ** cnt :: tail)
+           MkSigma _ (cnt :: tail)
          else
-          (_ ** tail)
+           MkSigma _ tail
 
-  elemIndexBy : (a -> a -> Bool) -> a -> Vect m a -> Maybe Nat
-  elemIndexBy p e = findIndex $ p e
+  elemIndexBy : {a : Type} -> {m : Nat} ->
+                (a -> a -> Bool) -> a -> Vect m a -> Maybe Nat
+  elemIndexBy p e = findIndex (p e)
 
 {- TODO
   elemIndex : Eq a => a -> Vect m a -> Maybe Nat
   elemIndex = elemIndexBy (==)
 -}
 
-  elemIndicesBy : (a -> a -> Bool) -> a -> Vect m a -> (p ** Vect p Nat)
-  elemIndicesBy p e = findIndices $ p e
+  elemIndicesBy : {a : Type} -> {m : Nat} ->
+                  (a -> a -> Bool) -> a -> Vect m a -> Sigma Nat (\p -> Vect p Nat)
+  elemIndicesBy p e = findIndices (p e)
 
 {- TODO
   elemIndices : Eq a => a -> Vect m a -> (p ** Vect p Nat)
@@ -451,7 +479,7 @@ module Vect where
   --------------------------------------------------------------------------------
   -- Filters
   --------------------------------------------------------------------------------
-
+{- TODO
   -- ||| Find all elements of a vector that satisfy some test
   filter : (a -> Bool) -> Vect n a -> (p ** Vect p a)
   filter p [] = ( _ ** [] )
@@ -577,7 +605,7 @@ module Vect where
       m >>= f = diag (map f m)
 
   instance Traversable (Vect n) where
-      traverse f [] = pure Vect.Nil
+      traverse f [] = pure Vect.[]
       traverse f (x :: xs) = [| Vect.( :: ) (f x) (traverse f xs) |]
 -}
 
@@ -640,3 +668,4 @@ instance DecEq a => DecEq (Vect n a) where
 
 -- For the primitives, we have to cheat because we don't have access to their
 -- internal implementations.
+-}

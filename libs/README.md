@@ -18,4 +18,9 @@ Some differences:
 | ----- | ---- | ------- |
 | \ =>  | \ -> |         |
 | (.)   | _∘_  | The period is a reserved character in Agda. I follow the agda-stdlib and use the unicode RING OPERATOR here. (An alternative would be the middle dot which on my keyboard is AltGr-.) |
-| Implicitly implicit lower case arguments | Explicitly implicit arguments. |
+| Implicitly implicit lower case arguments | Explicitly implicit arguments! |
+| (a,b) | a × b | The tuple type syntax in Agda is not the same as the tuple value syntax |
+| Nil   | []   | The empty vector (Nil) in Idris seems to have built-in syntactic sugar so that [] can be used as a pattern. |
+| (a, b) | (a , b) | The pair constructor _,_ in Agda needs space before on both sides |
+| (a : A ** B) | Sigma A (\a -> B) | No built-in syntactic sugar for the dependent sum type in Agda. |
+| (a ** b) | MkSigma a b | No built-in syntactic sugar for dependent sum values in Agda. |
