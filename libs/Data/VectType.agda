@@ -45,9 +45,9 @@ module Vect where
   length (x :: xs) = 1 + length xs
 
   -- ||| Show that the length function on vectors in fact calculates the length
-  private lengthCorrect : {a : Type} -> {n : Nat} -> (n : Nat) -> (xs : Vect n a) -> length xs == n
+  lengthCorrect : {a : Type} -> (n : Nat) -> (xs : Vect n a) -> length xs == n
   lengthCorrect Z     []        = Refl
-  lengthCorrect (S n) (x :: xs) = {! rewrite lengthCorrect n xs in Refl !}
+  lengthCorrect (S n) (x :: xs) = cong {f = S} (lengthCorrect n xs)
 
   --------------------------------------------------------------------------------
   -- Indexing into vectors
@@ -87,15 +87,14 @@ module Vect where
              Fin (S n) -> a -> Vect n a -> Vect (S n) a
   insertAt FZ     y xs        = y :: xs
   insertAt (FS k) y (x :: xs) = x :: insertAt k y xs
-  insertAt (FS k) y []        = {! void k !} -- TODO absurd k
+  insertAt (FS ()) y []
 
   -- ||| Construct a new vector consisting of all but the indicated element
   deleteAt : {a : Type} -> {n : Nat} ->
              Fin (S n) -> Vect (S n) a -> Vect n a
   deleteAt           FZ     (x :: xs) = xs
   deleteAt {n = S m} (FS k) (x :: xs) = x :: deleteAt k xs
-  deleteAt {n = Z}   (FS k) (x :: xs) = {! void k !} -- TODO absurd k
---  deleteAt           _      []      impossible
+  deleteAt {n = Z}   (FS ()) (x :: xs)
 
   -- ||| Replace an element at a particlar index with another
   replaceAt : {t : Type} -> {n : Nat} ->
@@ -168,7 +167,7 @@ module Vect where
   reverse xs = go [] xs
     where go : {a : Type} -> {n : Nat} -> {m : Nat} ->
                Vect n a -> Vect m a -> Vect (n + m) a
-          go {n}           acc []        = {! rewrite plusZeroRightNeutral n in acc !}
+          go {n}           acc []        = {! plusZeroRightNeutral n !}
           go {n} {m = S m} acc (x :: xs) = {! rewrite sym $ plusSuccRightSucc n m
                                          in go (x :: acc) xs !}
 
