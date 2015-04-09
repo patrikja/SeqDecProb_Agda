@@ -1,6 +1,6 @@
 module Idris.Data.Fin where
 open import Builtins
-open import Idris.Data.Nat
+open import Idris.Prelude.Nat
 -- ||| Numbers strictly less than some bound.  The name comes from "finite sets".
 -- |||
 -- ||| It's probably not a good idea to use `Fin` for arithmetic, and they will be

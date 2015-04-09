@@ -2,7 +2,7 @@ module Data.Vect where
 
 -- open import Language.Reflection
 open import Data.VectType public
-open import Idris.Data.Nat
+open import Idris.Prelude.Nat
 
 -- %access public
 -- %default total

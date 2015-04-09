@@ -3,7 +3,7 @@ open import Builtins
 open import Prelude.Basics
 open import Prelude.Maybe
 open import Idris.Prelude.Bool
-open import Idris.Data.Nat  -- TODO: use the real Idris.Prelude.Nat
+open import Idris.Prelude.Nat
 open import Syntax.PreorderReasoning
 -- TODO: pick a good naming for Idris' = and ==: Currently we have renamed = in Idris to == in Agda (because = is reserved) but not figured out another name for ==
 open import Idris.Data.Fin using (Fin; FZ; FS)
@@ -160,6 +160,8 @@ module Vect where
   --------------------------------------------------------------------------------
   -- Transformations
   --------------------------------------------------------------------------------
+  coerceVect : {a : Type} (m : Nat) (n : Nat) -> (m == n) -> Vect n a -> Vect m a
+  coerceVect m .m Refl v = v
 
   -- ||| Reverse the order of the elements of a vector
   reverse : {a : Type} -> {n : Nat} ->
@@ -167,10 +169,11 @@ module Vect where
   reverse xs = go [] xs
     where go : {a : Type} -> {n : Nat} -> {m : Nat} ->
                Vect n a -> Vect m a -> Vect (n + m) a
-          go {n}           acc []        = {! plusZeroRightNeutral n !}
-          go {n} {m = S m} acc (x :: xs) = {! rewrite sym $ plusSuccRightSucc n m
-                                         in go (x :: acc) xs !}
+          go {n = n}           acc []        = coerceVect (plus n Z) n (plusZeroRightNeutral n) acc
+          go {n = n} {m = S m} acc (x :: xs) = coerceVect (plus n (S m)) (S (plus n m))
+                                                 (sym (plusSuccRightSucc n m)) (go (x :: acc) xs)
 
+{- TODO
   -- ||| Alternate an element between the other elements of a vector
   -- ||| @ sep the element to intersperse
   -- ||| @ xs the vector to separate with `sep`
@@ -184,7 +187,7 @@ module Vect where
       intersperse'           sep []      = []
       intersperse' {n = S n} sep (x :: xs) = {! rewrite sym $ plusSuccRightSucc n n
                                          in sep :: x :: intersperse' sep xs !}
-
+-}
   --------------------------------------------------------------------------------
   -- Conversion from list (toList is provided by Foldable)
   --------------------------------------------------------------------------------

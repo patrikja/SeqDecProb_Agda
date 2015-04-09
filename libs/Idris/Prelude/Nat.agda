@@ -1,10 +1,10 @@
-module Prelude.Nat where
+module Idris.Prelude.Nat where
 
 open import Builtins
 
 -- import Prelude.Algebra
--- import Prelude.Basics
--- import Prelude.Bool
+open import Prelude.Basics
+open import Idris.Prelude.Bool
 -- import Prelude.Cast
 -- import Prelude.Classes
 -- import Prelude.Uninhabited
@@ -16,6 +16,9 @@ open import Builtins
 data Nat : Type where
   Z : Nat
   S : Nat -> Nat
+
+{-# BUILTIN NATURAL Nat #-}
+
 
 -- name hints for interactive editing
 -- %name Nat k,j,i,n,m
@@ -51,8 +54,9 @@ plus (S left) right = S (plus left right)
 -- ||| Multiply natural numbers
 mult : Nat -> Nat -> Nat
 mult Z right        = Z
-mult (S left) right = plus right $ mult left right
+mult (S left) right = plus right (mult left right)
 
+{- TODO Integer
 -- ||| Convert an Integer to a Nat, mapping negative numbers to 0
 fromIntegerNat : Integer -> Nat
 fromIntegerNat 0 = Z
@@ -66,6 +70,7 @@ fromIntegerNat n =
 toIntegerNat : Nat -> Integer
 toIntegerNat Z = 0
 toIntegerNat (S k) = 1 + toIntegerNat k
+-}
 
 -- ||| Subtract natural numbers. If the second number is larger than the first, return 0.
 minus : Nat -> Nat -> Nat
@@ -76,7 +81,7 @@ minus (S left) (S right) = minus left right
 -- ||| Exponentiation of natural numbers
 power : Nat -> Nat -> Nat
 power base Z       = S Z
-power base (S exp) = mult base $ power base exp
+power base (S exp) = mult base (power base exp)
 
 hyper : Nat -> Nat -> Nat -> Nat
 hyper Z        a b      = S b
@@ -93,11 +98,11 @@ hyper (S pn)   a (S pb) = hyper pn a (hyper (S pn) a pb)
 -- ||| Proofs that `n` is less than or equal to `m`
 -- ||| @ n the smaller number
 -- ||| @ m the larger number
-data LTE  : (n, m : Nat) -> Type where
+data LTE : (m : Nat)(n : Nat) -> Type where
   -- ||| Zero is the smallest Nat
-  LTEZero : LTE Z    right
+  LTEZero : {right : Nat} -> LTE Z    right
   -- ||| If n <= m, then n + 1 <= m + 1
-  LTESucc : LTE left right -> LTE (S left) (S right)
+  LTESucc : {left : Nat} -> {right : Nat} -> LTE left right -> LTE (S left) (S right)
 
 -- ||| Greater than or equal to
 GTE : Nat -> Nat -> Type
@@ -112,20 +117,20 @@ GT : Nat -> Nat -> Type
 GT left right = LT right left
 
 -- ||| A successor is never less than or equal zero
-succNotLTEzero : Not (S m `LTE` Z)
-succNotLTEzero LTEZero impossible
+succNotLTEzero : {m : Nat} -> Not (LTE (S m) Z)
+succNotLTEzero ()
 
 -- ||| If two numbers are ordered, their predecessors are too
-fromLteSucc : (S m `LTE` S n) -> (m `LTE` n)
+fromLteSucc : {m : Nat} -> {n : Nat} -> (LTE (S m) (S n)) -> (LTE m n)
 fromLteSucc (LTESucc x) = x
 
 -- ||| A decision procedure for `LTE`
-isLTE : (m, n : Nat) -> Dec (m `LTE` n)
+isLTE : (m n : Nat) -> Dec (LTE m n)
 isLTE Z n = Yes LTEZero
 isLTE (S k) Z = No succNotLTEzero
 isLTE (S k) (S j) with (isLTE k j)
 isLTE (S k) (S j) | (Yes prf) = Yes (LTESucc prf)
-isLTE (S k) (S j) | (No contra) = No (contra . fromLteSucc)
+isLTE (S k) (S j) | (No contra) = No (contra ∘ fromLteSucc)
 
 -- ||| Boolean test than one Nat is less than or equal to another
 lte : Nat -> Nat -> Bool
@@ -157,6 +162,7 @@ maximum Z m = m
 maximum (S n) Z = S n
 maximum (S n) (S m) = S (maximum n m)
 
+{- TODO Int
 -- ||| Tail recursive cast Nat to Int
 -- ||| Note that this can overflow
 toIntNat : Nat -> Int
@@ -164,7 +170,7 @@ toIntNat n = toIntNat' n 0 where
         toIntNat' : Nat -> Int -> Int
         toIntNat' Z     x = x
         toIntNat' (S n) x = toIntNat' n (x + 1)
-
+-}
 --------------------------------------------------------------------------------
 -- Type class instances
 --------------------------------------------------------------------------------
@@ -182,7 +188,16 @@ instance Ord Nat where
   compare Z (S k)     = LT
   compare (S k) Z     = GT
   compare (S x) (S y) = compare x y
+-}
 
+infixl 8 _+_ _-_
+infixl 9 _*_
+
+_+_ = plus
+_-_ = minus
+_*_ = mult
+
+{-
 instance Num Nat where
   (+) = plus
   (-) = minus
@@ -191,7 +206,8 @@ instance Num Nat where
   abs x = x
 
   fromInteger = fromIntegerNat
-
+-}
+{-
 instance MinBound Nat where
   minBound = Z
 
@@ -202,12 +218,12 @@ instance Cast Integer Nat where
 -- ||| A wrapper for Nat that specifies the semigroup and monad instances that use (+)
 record Multiplicative : Type where
   field
-    getMultiplicative : Nat -> Multiplicative
+    getMultiplicative : Nat
 
 -- ||| A wrapper for Nat that specifies the semigroup and monad instances that use (*)
 record Additive : Type where
   field
-    getAdditive : Nat -> Additive
+    getAdditive : Nat
 {-
 instance Semigroup Multiplicative where
   (<+>) left right = getMultiplicative $ left' * right'
@@ -313,44 +329,50 @@ divNat left (S right) = div' left left right
         S (div' left (centre - (S right)) right)
 {-
 instance Integral Nat where
-  div = divNat
-  mod = modNat
 -}
+div = divNat
+mod = modNat
 
+{- TODO convince the termination checker
 log2 : Nat -> Nat
 log2 Z = Z
 log2 (S Z) = Z
-log2 n = S (log2 (assert_smaller n (n `divNat` 2)))
+log2 n = S (log2 (divNat n 2))
+-}
 
 --------------------------------------------------------------------------------
 -- GCD and LCM
 --------------------------------------------------------------------------------
+{- TODO convince the termination checker
 gcd : Nat -> Nat -> Nat
 gcd a Z = a
-gcd a b = assert_total (gcd b (a `modNat` b))
+gcd a b = gcd b (modNat a b)
 
 lcm : Nat -> Nat -> Nat
 lcm _ Z = Z
 lcm Z _ = Z
 lcm x y = divNat (x * y) (gcd x y)
+-}
 
 
 --------------------------------------------------------------------------------
 -- An informative comparison view
 --------------------------------------------------------------------------------
-data CmpNat : Nat -> Nat -> Type where
-     CmpLT : (y : _) -> CmpNat x (x + S y)
-     CmpEQ : CmpNat x x
-     CmpGT : (x : _) -> CmpNat (y + S x) y
+data CmpNat : (x : Nat) (y : Nat) -> Type where
+     CmpLT : {x : Nat} -> (y : _) -> CmpNat x (x + S y)
+     CmpEQ : {x : Nat} -> CmpNat x x
+     CmpGT : {y : Nat} -> (x : _) -> CmpNat (y + S x) y
 
-cmp : (x, y : Nat) -> CmpNat x y
+{- TODO
+cmp : (x y : Nat) -> CmpNat x y
 cmp Z Z     = CmpEQ
 cmp Z (S k) = CmpLT _
 cmp (S k) Z = CmpGT _
 cmp (S x) (S y) with (cmp x y)
-  cmp (S x) (S (x + (S k))) | CmpLT k = CmpLT k
-  cmp (S x) (S x)           | CmpEQ   = CmpEQ
-  cmp (S (y + (S k))) (S y) | CmpGT k = CmpGT k
+cmp (S x) (S (x + (S k))) | CmpLT k = CmpLT k
+cmp (S x) (S x)           | CmpEQ   = CmpEQ
+cmp (S (y + (S k))) (S y) | CmpGT k = CmpGT k
+-}
 
 --------------------------------------------------------------------------------
 -- Properties
@@ -359,368 +381,370 @@ cmp (S x) (S y) with (cmp x y)
 -- Succ
 
 -- ||| S preserves equality
-eqSucc : (left : Nat) -> (right : Nat) -> (p : left = right) ->
-  S left = S right
-eqSucc left _ Refl = Refl
+eqSucc : (left : Nat) -> (right : Nat) -> (p : left == right) ->
+  S left == S right
+eqSucc left .left Refl = Refl
 
 -- ||| S is injective
-succInjective : (left : Nat) -> (right : Nat) -> (p : S left = S right) ->
-  left = right
-succInjective left _ Refl = Refl
+succInjective : (left : Nat) -> (right : Nat) -> (p : S left == S right) ->
+  left == right
+succInjective left .left Refl = Refl
 
 -- Plus
-plusZeroLeftNeutral : (right : Nat) -> 0 + right = right
+plusZeroLeftNeutral : (right : Nat) -> (0 + right) == right
 plusZeroLeftNeutral right = Refl
 
-plusZeroRightNeutral : (left : Nat) -> left + 0 = left
+plusZeroRightNeutral : (left : Nat) -> (left + 0) == left
 plusZeroRightNeutral Z     = Refl
 plusZeroRightNeutral (S n) =
   let inductiveHypothesis = plusZeroRightNeutral n in
-    ?plusZeroRightNeutralStepCase
+    cong {f = S} inductiveHypothesis -- ?plusZeroRightNeutralStepCase
 
 plusSuccRightSucc : (left : Nat) -> (right : Nat) ->
-  S (left + right) = left + (S right)
+  S (left + right) == (left + S right)
 plusSuccRightSucc Z right        = Refl
 plusSuccRightSucc (S left) right =
   let inductiveHypothesis = plusSuccRightSucc left right in
-    ?plusSuccRightSuccStepCase
+    cong {f = S} inductiveHypothesis
+
+{- TODO continue
 
 plusCommutative : (left : Nat) -> (right : Nat) ->
-  left + right = right + left
-plusCommutative Z        right = ?plusCommutativeBaseCase
+  (left + right) == (right + left)
+plusCommutative Z        right = {! ?plusCommutativeBaseCase !}
 plusCommutative (S left) right =
   let inductiveHypothesis = plusCommutative left right in
-    ?plusCommutativeStepCase
+    {! ?plusCommutativeStepCase !}
 
 plusAssociative : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left + (centre + right) = (left + centre) + right
+  left + (centre + right) == (left + centre) + right
 plusAssociative Z        centre right = Refl
 plusAssociative (S left) centre right =
   let inductiveHypothesis = plusAssociative left centre right in
-    ?plusAssociativeStepCase
+    {! ?plusAssociativeStepCase !}
 
 plusConstantRight : (left : Nat) -> (right : Nat) -> (c : Nat) ->
-  (p : left = right) -> left + c = right + c
+  (p : left == right) -> left + c == right + c
 plusConstantRight left _ c Refl = Refl
 
 plusConstantLeft : (left : Nat) -> (right : Nat) -> (c : Nat) ->
-  (p : left = right) -> c + left = c + right
+  (p : left == right) -> c + left == c + right
 plusConstantLeft left _ c Refl = Refl
 
-plusOneSucc : (right : Nat) -> 1 + right = S right
+plusOneSucc : (right : Nat) -> 1 + right == S right
 plusOneSucc n = Refl
 
 plusLeftCancel : (left : Nat) -> (right : Nat) -> (right' : Nat) ->
-  (p : left + right = left + right') -> right = right'
-plusLeftCancel Z        right right' p = ?plusLeftCancelBaseCase
+  (p : left + right == left + right') -> right == right'
+plusLeftCancel Z        right right' p = {! ?plusLeftCancelBaseCase !}
 plusLeftCancel (S left) right right' p =
   let inductiveHypothesis = plusLeftCancel left right right' in
-    ?plusLeftCancelStepCase
+    {! ?plusLeftCancelStepCase !}
 
 plusRightCancel : (left : Nat) -> (left' : Nat) -> (right : Nat) ->
-  (p : left + right = left' + right) -> left = left'
-plusRightCancel left left' Z         p = ?plusRightCancelBaseCase
+  (p : left + right == left' + right) -> left == left'
+plusRightCancel left left' Z         p = {! ?plusRightCancelBaseCase !}
 plusRightCancel left left' (S right) p =
   let inductiveHypothesis = plusRightCancel left left' right in
-    ?plusRightCancelStepCase
+    {! ?plusRightCancelStepCase !}
 
 plusLeftLeftRightZero : (left : Nat) -> (right : Nat) ->
-  (p : left + right = left) -> right = Z
-plusLeftLeftRightZero Z        right p = ?plusLeftLeftRightZeroBaseCase
+  (p : left + right == left) -> right == Z
+plusLeftLeftRightZero Z        right p = {! ?plusLeftLeftRightZeroBaseCase !}
 plusLeftLeftRightZero (S left) right p =
   let inductiveHypothesis = plusLeftLeftRightZero left right in
-    ?plusLeftLeftRightZeroStepCase
+    {! ?plusLeftLeftRightZeroStepCase !}
 
 -- Mult
-multZeroLeftZero : (right : Nat) -> Z * right = Z
+multZeroLeftZero : (right : Nat) -> Z * right == Z
 multZeroLeftZero right = Refl
 
-multZeroRightZero : (left : Nat) -> left * Z = Z
+multZeroRightZero : (left : Nat) -> left * Z == Z
 multZeroRightZero Z        = Refl
 multZeroRightZero (S left) =
   let inductiveHypothesis = multZeroRightZero left in
-    ?multZeroRightZeroStepCase
+    {! ?multZeroRightZeroStepCase !}
 
 multRightSuccPlus : (left : Nat) -> (right : Nat) ->
-  left * (S right) = left + (left * right)
+  left * (S right) == left + (left * right)
 multRightSuccPlus Z        right = Refl
 multRightSuccPlus (S left) right =
   let inductiveHypothesis = multRightSuccPlus left right in
-    ?multRightSuccPlusStepCase
+    {! ?multRightSuccPlusStepCase !}
 
 multLeftSuccPlus : (left : Nat) -> (right : Nat) ->
-  (S left) * right = right + (left * right)
+  (S left) * right == right + (left * right)
 multLeftSuccPlus left right = Refl
 
 multCommutative : (left : Nat) -> (right : Nat) ->
-  left * right = right * left
-multCommutative Z right        = ?multCommutativeBaseCase
+  left * right == right * left
+multCommutative Z right        = {! ?multCommutativeBaseCase !}
 multCommutative (S left) right =
   let inductiveHypothesis = multCommutative left right in
-    ?multCommutativeStepCase
+    {! ?multCommutativeStepCase !}
 
 multDistributesOverPlusRight : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left * (centre + right) = (left * centre) + (left * right)
+  left * (centre + right) == (left * centre) + (left * right)
 multDistributesOverPlusRight Z        centre right = Refl
 multDistributesOverPlusRight (S left) centre right =
   let inductiveHypothesis = multDistributesOverPlusRight left centre right in
-    ?multDistributesOverPlusRightStepCase
+    {! ?multDistributesOverPlusRightStepCase !}
 
 multDistributesOverPlusLeft : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  (left + centre) * right = (left * right) + (centre * right)
+  (left + centre) * right == (left * right) + (centre * right)
 multDistributesOverPlusLeft Z        centre right = Refl
 multDistributesOverPlusLeft (S left) centre right =
   let inductiveHypothesis = multDistributesOverPlusLeft left centre right in
-    ?multDistributesOverPlusLeftStepCase
+    {! ?multDistributesOverPlusLeftStepCase !}
 
 multAssociative : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left * (centre * right) = (left * centre) * right
+  left * (centre * right) == (left * centre) * right
 multAssociative Z        centre right = Refl
 multAssociative (S left) centre right =
   let inductiveHypothesis = multAssociative left centre right in
-    ?multAssociativeStepCase
+    {! ?multAssociativeStepCase !}
 
-multOneLeftNeutral : (right : Nat) -> 1 * right = right
+multOneLeftNeutral : (right : Nat) -> 1 * right == right
 multOneLeftNeutral Z         = Refl
 multOneLeftNeutral (S right) =
   let inductiveHypothesis = multOneLeftNeutral right in
-    ?multOneLeftNeutralStepCase
+    {! ?multOneLeftNeutralStepCase !}
 
-multOneRightNeutral : (left : Nat) -> left * 1 = left
+multOneRightNeutral : (left : Nat) -> left * 1 == left
 multOneRightNeutral Z        = Refl
 multOneRightNeutral (S left) =
   let inductiveHypothesis = multOneRightNeutral left in
-    ?multOneRightNeutralStepCase
+    {! ?multOneRightNeutralStepCase !}
 
 -- Minus
 minusSuccSucc : (left : Nat) -> (right : Nat) ->
-  (S left) - (S right) = left - right
+  (S left) - (S right) == left - right
 minusSuccSucc left right = Refl
 
-minusZeroLeft : (right : Nat) -> 0 - right = Z
+minusZeroLeft : (right : Nat) -> 0 - right == Z
 minusZeroLeft right = Refl
 
-minusZeroRight : (left : Nat) -> left - 0 = left
+minusZeroRight : (left : Nat) -> left - 0 == left
 minusZeroRight Z        = Refl
 minusZeroRight (S left) = Refl
 
-minusZeroN : (n : Nat) -> Z = n - n
+minusZeroN : (n : Nat) -> Z == n - n
 minusZeroN Z     = Refl
 minusZeroN (S n) = minusZeroN n
 
-minusOneSuccN : (n : Nat) -> S Z = (S n) - n
+minusOneSuccN : (n : Nat) -> S Z == (S n) - n
 minusOneSuccN Z     = Refl
 minusOneSuccN (S n) = minusOneSuccN n
 
-minusSuccOne : (n : Nat) -> S n - 1 = n
+minusSuccOne : (n : Nat) -> S n - 1 == n
 minusSuccOne Z     = Refl
 minusSuccOne (S n) = Refl
 
-minusPlusZero : (n : Nat) -> (m : Nat) -> n - (n + m) = Z
+minusPlusZero : (n : Nat) -> (m : Nat) -> n - (n + m) == Z
 minusPlusZero Z     m = Refl
 minusPlusZero (S n) m = minusPlusZero n m
 
 minusMinusMinusPlus : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left - centre - right = left - (centre + right)
+  left - centre - right == left - (centre + right)
 minusMinusMinusPlus Z        Z          right = Refl
 minusMinusMinusPlus (S left) Z          right = Refl
 minusMinusMinusPlus Z        (S centre) right = Refl
 minusMinusMinusPlus (S left) (S centre) right =
   let inductiveHypothesis = minusMinusMinusPlus left centre right in
-    ?minusMinusMinusPlusStepCase
+    {! ?minusMinusMinusPlusStepCase !}
 
 plusMinusLeftCancel : (left : Nat) -> (right : Nat) -> (right' : Nat) ->
-  (left + right) - (left + right') = right - right'
+  (left + right) - (left + right') == right - right'
 plusMinusLeftCancel Z right right'        = Refl
 plusMinusLeftCancel (S left) right right' =
   let inductiveHypothesis = plusMinusLeftCancel left right right' in
-    ?plusMinusLeftCancelStepCase
+    {! ?plusMinusLeftCancelStepCase !}
 
 multDistributesOverMinusLeft : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  (left - centre) * right = (left * right) - (centre * right)
+  (left - centre) * right == (left * right) - (centre * right)
 multDistributesOverMinusLeft Z        Z          right = Refl
 multDistributesOverMinusLeft (S left) Z          right =
-  ?multDistributesOverMinusLeftBaseCase
+  {! ?multDistributesOverMinusLeftBaseCase !}
 multDistributesOverMinusLeft Z        (S centre) right = Refl
 multDistributesOverMinusLeft (S left) (S centre) right =
   let inductiveHypothesis = multDistributesOverMinusLeft left centre right in
-    ?multDistributesOverMinusLeftStepCase
+    {! ?multDistributesOverMinusLeftStepCase !}
 
 multDistributesOverMinusRight : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left * (centre - right) = (left * centre) - (left * right)
+  left * (centre - right) == (left * centre) - (left * right)
 multDistributesOverMinusRight left centre right =
-  ?multDistributesOverMinusRightBody
+  {! ?multDistributesOverMinusRightBody !}
 
 -- Power
-powerSuccPowerLeft : (base : Nat) -> (exp : Nat) -> power base (S exp) =
-  base * (power base exp)
+powerSuccPowerLeft : (base : Nat) -> (exp : Nat) ->
+  power base (S exp) == base * (power base exp)
 powerSuccPowerLeft base exp = Refl
 
 multPowerPowerPlus : (base : Nat) -> (exp : Nat) -> (exp' : Nat) ->
-  (power base exp) * (power base exp') = power base (exp + exp')
-multPowerPowerPlus base Z       exp' = ?multPowerPowerPlusBaseCase
+  (power base exp) * (power base exp') == power base (exp + exp')
+multPowerPowerPlus base Z       exp' = {! ?multPowerPowerPlusBaseCase !}
 multPowerPowerPlus base (S exp) exp' =
   let inductiveHypothesis = multPowerPowerPlus base exp exp' in
-    ?multPowerPowerPlusStepCase
+    {! ?multPowerPowerPlusStepCase !}
 
-powerZeroOne : (base : Nat) -> power base 0 = S Z
+powerZeroOne : (base : Nat) -> power base 0 == S Z
 powerZeroOne base = Refl
 
-powerOneNeutral : (base : Nat) -> power base 1 = base
+powerOneNeutral : (base : Nat) -> power base 1 == base
 powerOneNeutral Z        = Refl
 powerOneNeutral (S base) =
   let inductiveHypothesis = powerOneNeutral base in
-    ?powerOneNeutralStepCase
+    {! ?powerOneNeutralStepCase !}
 
-powerOneSuccOne : (exp : Nat) -> power 1 exp = S Z
+powerOneSuccOne : (exp : Nat) -> power 1 exp == S Z
 powerOneSuccOne Z       = Refl
 powerOneSuccOne (S exp) =
   let inductiveHypothesis = powerOneSuccOne exp in
-    ?powerOneSuccOneStepCase
+    {! ?powerOneSuccOneStepCase !}
 
-powerSuccSuccMult : (base : Nat) -> power base 2 = mult base base
+powerSuccSuccMult : (base : Nat) -> power base 2 == mult base base
 powerSuccSuccMult Z        = Refl
 powerSuccSuccMult (S base) =
   let inductiveHypothesis = powerSuccSuccMult base in
-    ?powerSuccSuccMultStepCase
+    {! ?powerSuccSuccMultStepCase !}
 
 powerPowerMultPower : (base : Nat) -> (exp : Nat) -> (exp' : Nat) ->
-  power (power base exp) exp' = power base (exp * exp')
-powerPowerMultPower base exp Z        = ?powerPowerMultPowerBaseCase
+  power (power base exp) exp' == power base (exp * exp')
+powerPowerMultPower base exp Z        = {! ?powerPowerMultPowerBaseCase !}
 powerPowerMultPower base exp (S exp') =
   let inductiveHypothesis = powerPowerMultPower base exp exp' in
-    ?powerPowerMultPowerStepCase
+    {! ?powerPowerMultPowerStepCase !}
 
 -- Pred
-predSucc : (n : Nat) -> pred (S n) = n
+predSucc : (n : Nat) -> pred (S n) == n
 predSucc n = Refl
 
 minusSuccPred : (left : Nat) -> (right : Nat) ->
-  left - (S right) = pred (left - right)
+  left - (S right) == pred (left - right)
 minusSuccPred Z        right = Refl
 minusSuccPred (S left) Z =
   let inductiveHypothesis = minusSuccPred left Z in
-    ?minusSuccPredStepCase
+    {! ?minusSuccPredStepCase !}
 minusSuccPred (S left) (S right) =
   let inductiveHypothesis = minusSuccPred left right in
-    ?minusSuccPredStepCase'
+    {! ?minusSuccPredStepCase' !}
 
 -- boolElim
 boolElimSuccSucc : (cond : Bool) -> (t : Nat) -> (f : Nat) ->
-  S (boolElim cond t f) = boolElim cond (S t) (S f)
+  S (boolElim cond t f) == boolElim cond (S t) (S f)
 boolElimSuccSucc True  t f = Refl
 boolElimSuccSucc False t f = Refl
 
 boolElimPlusPlusLeft : (cond : Bool) -> (left : Nat) -> (t : Nat) -> (f : Nat) ->
-  left + (boolElim cond t f) = boolElim cond (left + t) (left + f)
+  left + (boolElim cond t f) == boolElim cond (left + t) (left + f)
 boolElimPlusPlusLeft True  left t f = Refl
 boolElimPlusPlusLeft False left t f = Refl
 
 boolElimPlusPlusRight : (cond : Bool) -> (right : Nat) -> (t : Nat) -> (f : Nat) ->
-  (boolElim cond t f) + right = boolElim cond (t + right) (f + right)
+  (boolElim cond t f) + right == boolElim cond (t + right) (f + right)
 boolElimPlusPlusRight True  right t f = Refl
 boolElimPlusPlusRight False right t f = Refl
 
 boolElimMultMultLeft : (cond : Bool) -> (left : Nat) -> (t : Nat) -> (f : Nat) ->
-  left * (boolElim cond t f) = boolElim cond (left * t) (left * f)
+  left * (boolElim cond t f) == boolElim cond (left * t) (left * f)
 boolElimMultMultLeft True  left t f = Refl
 boolElimMultMultLeft False left t f = Refl
 
 boolElimMultMultRight : (cond : Bool) -> (right : Nat) -> (t : Nat) -> (f : Nat) ->
-  (boolElim cond t f) * right = boolElim cond (t * right) (f * right)
+  (boolElim cond t f) * right == boolElim cond (t * right) (f * right)
 boolElimMultMultRight True  right t f = Refl
 boolElimMultMultRight False right t f = Refl
 
 -- Orders
-lteNTrue : (n : Nat) -> lte n n = True
+lteNTrue : (n : Nat) -> lte n n == True
 lteNTrue Z     = Refl
 lteNTrue (S n) = lteNTrue n
 
-LTESuccZeroFalse : (n : Nat) -> lte (S n) Z = False
+LTESuccZeroFalse : (n : Nat) -> lte (S n) Z == False
 LTESuccZeroFalse Z     = Refl
 LTESuccZeroFalse (S n) = Refl
 
 -- Minimum and maximum
-maximumAssociative : (l,c,r : Nat) -> maximum l (maximum c r) = maximum (maximum l c) r
+maximumAssociative : (l c r : Nat) -> maximum l (maximum c r) == maximum (maximum l c) r
 maximumAssociative Z c r = Refl
 maximumAssociative (S k) Z r = Refl
 maximumAssociative (S k) (S j) Z = Refl
 maximumAssociative (S k) (S j) (S i) = {! rewrite maximumAssociative k j i in Refl !}
-maximumCommutative : (l, r : Nat) -> maximum l r = maximum r l
+maximumCommutative : (l r : Nat) -> maximum l r == maximum r l
 maximumCommutative Z Z = Refl
 maximumCommutative Z (S k) = Refl
 maximumCommutative (S k) Z = Refl
 maximumCommutative (S k) (S j) = {! rewrite maximumCommutative k j in Refl !}
-maximumIdempotent : (n : Nat) -> maximum n n = n
+maximumIdempotent : (n : Nat) -> maximum n n == n
 maximumIdempotent Z = Refl
 maximumIdempotent (S k) = cong (maximumIdempotent k)
 
-minimumAssociative : (l,c,r : Nat) -> minimum l (minimum c r) = minimum (minimum l c) r
+minimumAssociative : (l c r : Nat) -> minimum l (minimum c r) == minimum (minimum l c) r
 minimumAssociative Z c r = Refl
 minimumAssociative (S k) Z r = Refl
 minimumAssociative (S k) (S j) Z = Refl
 minimumAssociative (S k) (S j) (S i) = {! rewrite minimumAssociative k j i in Refl !}
-minimumCommutative : (l, r : Nat) -> minimum l r = minimum r l
+minimumCommutative : (l r : Nat) -> minimum l r == minimum r l
 minimumCommutative Z Z = Refl
 minimumCommutative Z (S k) = Refl
 minimumCommutative (S k) Z = Refl
 minimumCommutative (S k) (S j) = {! rewrite minimumCommutative k j in Refl !}
-minimumIdempotent : (n : Nat) -> minimum n n = n
+minimumIdempotent : (n : Nat) -> minimum n n == n
 minimumIdempotent Z = Refl
 minimumIdempotent (S k) = cong (minimumIdempotent k)
 
-minimumZeroZeroRight : (right : Nat) -> minimum 0 right = Z
+minimumZeroZeroRight : (right : Nat) -> minimum 0 right == Z
 minimumZeroZeroRight Z = Refl
 minimumZeroZeroRight (S right) = minimumZeroZeroRight right
 
-minimumZeroZeroLeft : (left : Nat) -> minimum left 0 = Z
+minimumZeroZeroLeft : (left : Nat) -> minimum left 0 == Z
 minimumZeroZeroLeft Z        = Refl
 minimumZeroZeroLeft (S left) = Refl
 
 minimumSuccSucc : (left : Nat) -> (right : Nat) ->
-  minimum (S left) (S right) = S (minimum left right)
+  minimum (S left) (S right) == S (minimum left right)
 minimumSuccSucc Z        Z         = Refl
 minimumSuccSucc (S left) Z         = Refl
 minimumSuccSucc Z        (S right) = Refl
 minimumSuccSucc (S left) (S right) =
   let inductiveHypothesis = minimumSuccSucc left right in
-    ?minimumSuccSuccStepCase
+    {! ?minimumSuccSuccStepCase !}
 
-maximumZeroNRight : (right : Nat) -> maximum Z right = right
+maximumZeroNRight : (right : Nat) -> maximum Z right == right
 maximumZeroNRight Z         = Refl
 maximumZeroNRight (S right) = Refl
 
-maximumZeroNLeft : (left : Nat) -> maximum left Z = left
+maximumZeroNLeft : (left : Nat) -> maximum left Z == left
 maximumZeroNLeft Z        = Refl
 maximumZeroNLeft (S left) = Refl
 
 maximumSuccSucc : (left : Nat) -> (right : Nat) ->
-  S (maximum left right) = maximum (S left) (S right)
+  S (maximum left right) == maximum (S left) (S right)
 maximumSuccSucc Z        Z         = Refl
 maximumSuccSucc (S left) Z         = Refl
 maximumSuccSucc Z        (S right) = Refl
 maximumSuccSucc (S left) (S right) =
   let inductiveHypothesis = maximumSuccSucc left right in
-    ?maximumSuccSuccStepCase
+    {! ?maximumSuccSuccStepCase !}
 
-sucMaxL : (l : Nat) -> maximum (S l) l = (S l)
+sucMaxL : (l : Nat) -> maximum (S l) l == (S l)
 sucMaxL Z = Refl
 sucMaxL (S l) = cong (sucMaxL l)
 
-sucMaxR : (l : Nat) -> maximum l (S l) = (S l)
+sucMaxR : (l : Nat) -> maximum l (S l) == (S l)
 sucMaxR Z = Refl
 sucMaxR (S l) = cong (sucMaxR l)
 
-sucMinL : (l : Nat) -> minimum (S l) l = l
+sucMinL : (l : Nat) -> minimum (S l) l == l
 sucMinL Z = Refl
 sucMinL (S l) = cong (sucMinL l)
 
-sucMinR : (l : Nat) -> minimum l (S l) = l
+sucMinR : (l : Nat) -> minimum l (S l) == l
 sucMinR Z = Refl
 sucMinR (S l) = cong (sucMinR l)
 
 -- div and mod
-modZeroZero : (n : Nat) -> mod 0 n = Z
+modZeroZero : (n : Nat) -> mod 0 n == Z
 modZeroZero Z     = Refl
 modZeroZero (S n) = Refl
 
@@ -974,4 +998,5 @@ plusLeftCancelBaseCase = proof {
     rewrite p;
     trivial;
 }
+-}
 -}
