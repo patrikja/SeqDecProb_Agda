@@ -1,8 +1,12 @@
 module Data.Vect where
 
+open import Builtins
+open import Prelude.Basics
 -- open import Language.Reflection
-open import Data.VectType public
+open import Data.VectType
 open import Idris.Prelude.Nat
+
+open Vect public
 
 -- %access public
 -- %default total
@@ -13,26 +17,29 @@ open import Idris.Prelude.Nat
 
 -- ||| A proof that some element is found in a vector
 data Elem : {a : Set} -> {k : Nat} -> a -> Vect k a -> Type where
-     Here : Elem x (x::xs)
-     There : Elem x xs -> Elem x (y::xs)
+     Here  : forall x xs -> Elem x (x :: xs)
+     There : forall x y xs -> Elem x xs -> Elem x (y :: xs)
 
 -- ||| Nothing can be in an empty Vect
-noEmptyElem : {x : a} -> Elem x [] -> Void
+noEmptyElem : {a : Type} -> {x : a} -> Elem x [] -> Void
 noEmptyElem Here impossible
 
 -- ||| An item not in the head and not in the tail is not in the Vect at all
-neitherHereNorThere : {x, y : a} -> {xs : Vect n a} -> Not (x = y) -> Not (Elem x xs) -> Not (Elem x (y :: xs))
+neitherHereNorThere : {a : Type} -> {n : Nat} ->
+                      {x y : a} -> {xs : Vect n a} -> Not (x == y) -> Not (Elem x xs) -> Not (Elem x (y :: xs))
 neitherHereNorThere xneqy xninxs Here = xneqy Refl
 neitherHereNorThere xneqy xninxs (There xinxs) = xninxs xinxs
 
+{- TODO DecEq
 -- ||| A decision procedure for Elem
-isElem : {decEq : DecEq a} -> (x : a) -> (xs : Vect n a) -> Dec (Elem x xs)
+isElem : {n : Nat} -> {decEq : DecEq a} -> (x : a) -> (xs : Vect n a) -> Dec (Elem x xs)
 isElem x [] = No noEmptyElem
 isElem x (y :: xs) with (decEq x y)
 isElem x (x :: xs) | (Yes Refl) = Yes Here
 isElem x (y :: xs) | (No xneqy) with (isElem x xs)
 isElem x (y :: xs) | (No xneqy) | (Yes xinxs) = Yes (There xinxs)
 isElem x (y :: xs) | (No xneqy) | (No xninxs) = No (neitherHereNorThere xneqy xninxs)
+-}
 
 -- ||| A tactic for discovering where, if anywhere, an element is in a vector
 -- ||| @ n how many elements to search before giving up
