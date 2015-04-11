@@ -57,10 +57,14 @@ instance Eq Bool where
 instance (Eq a, Eq b) => Eq (a, b) where
   (==) (a, c) (b, d) = (a == b) && (c == d)
 
+-}
 
 -- ---------------------------------------------------------- [ Ordering Class ]
-%elim data Ordering = LT | EQ | GT
 
+data Ordering : Type where
+  LT EQ GT : Ordering
+
+{-
 instance Eq Ordering where
     LT == LT = True
     EQ == EQ = True

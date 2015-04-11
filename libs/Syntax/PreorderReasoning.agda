@@ -1,9 +1,6 @@
 module Syntax.PreorderReasoning where
 open import Builtins
 
-data _==_  {l} {a : Set l} (x : a) : {b : Set l} -> (y : b) -> Set where
-  Refl : x == x
-
 module Equal where
     qed : {a : Type} ->
           (x : a) -> x == x
