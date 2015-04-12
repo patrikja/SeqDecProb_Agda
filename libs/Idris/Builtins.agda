@@ -1,4 +1,4 @@
-module Builtins where
+module Idris.Builtins where
 Type = Set
 Lazy : Type -> Type
 Lazy A = A

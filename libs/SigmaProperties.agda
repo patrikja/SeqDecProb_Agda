@@ -1,24 +1,24 @@
 module SigmaProperties where
--- import Data.Fin
--- import Data.Vect
-open import Control.Isomorphism
-open import Builtins
-open import Syntax.PreorderReasoning
-open import Prelude.Basics
+-- import Idris.Data.Fin
+-- import Idris.Data.Vect
+open import Idris.Control.Isomorphism
+open import Idris.Builtins
+open import Idris.Syntax.PreorderReasoning
+open import Idris.Prelude.Basics
 
--- import Decidable
--- import Finite
--- import Unique
--- import SigmaOperations
--- import VectOperations
--- import VectProperties
--- import FiniteOperations
--- import FiniteProperties
--- import FinOperations
+-- import Idris.Decidable
+-- import Idris.Finite
+-- import Idris.Unique
+-- import Idris.SigmaOperations
+-- import Idris.VectOperations
+-- import Idris.VectProperties
+-- import Idris.FiniteOperations
+-- import Idris.FiniteProperties
+-- import Idris.FinOperations
 -- import IsomorphismOperations
 -- import IsomorphismProperties
--- import Basics
--- import LambdaPostulates
+-- import Idris.Basics
+-- import Idris.LambdaPostulates
 
 -- In agda-stdlib we would build this not on Iso but on Inverse (or
 -- equivalently Bijection). They are in turn built on Setoids which is

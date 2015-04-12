@@ -1,10 +1,10 @@
-module Data.VectType where
-open import Builtins
-open import Prelude.Basics
-open import Prelude.Maybe
+module Idris.Data.VectType where
+open import Idris.Builtins
+open import Idris.Prelude.Basics
+open import Idris.Prelude.Maybe
 open import Idris.Prelude.Bool
 open import Idris.Prelude.Nat
-open import Syntax.PreorderReasoning
+open import Idris.Syntax.PreorderReasoning
 -- TODO: pick a good naming for Idris' = and ==: Currently we have renamed = in Idris to == in Agda (because = is reserved) but not figured out another name for ==
 open import Idris.Data.Fin using (Fin; FZ; FS)
 
@@ -304,6 +304,11 @@ module Vect where
     map f []        = []
     map f (x :: xs) = f x  ::  map f xs
 -}
+
+  map : {a b : Type} -> {n : Nat} ->
+        (f : a -> b) -> (Vect n a -> Vect n b)
+  map f []        = []
+  map f (x :: xs) = f x  ::  map f xs
 
   -- ||| Map a partial function across a vector, returning those elements for which
   -- ||| the function had a value.

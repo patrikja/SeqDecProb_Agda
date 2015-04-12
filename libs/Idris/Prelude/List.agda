@@ -1,21 +1,22 @@
 module Idris.Prelude.List where
 
-open import Builtins
+open import Idris.Builtins
 
--- import Prelude.Algebra
-open import Prelude.Basics
-open import Prelude.Bool
-open import Prelude.Classes
--- import Prelude.Foldable
--- import Prelude.Functor
-open import Prelude.Maybe
+-- import Idris.Prelude.Algebra
+open import Idris.Prelude.Basics
+open import Idris.Prelude.Bool
+open import Idris.Prelude.Classes
+-- import Idris.Prelude.Foldable
+-- import Idris.Prelude.Functor
+open import Idris.Prelude.Maybe
 open import Idris.Prelude.Nat
 
 -- %access public
 -- %default total
 
 -- infix 5 _\\_
-infixr 7 _::_ _++_
+infixr 7 _::_
+-- infixr 7 _++_
 
 -- ||| Linked lists
 data List (a : Type) : Type where
@@ -24,6 +25,7 @@ data List (a : Type) : Type where
   -- ||| Cons cell
   _::_ : a -> List a -> List a
 
+Nil : {a : Type} -> List a
 Nil = []
 
 -- Name hints for interactive editing
@@ -67,8 +69,10 @@ length (x :: xs) = 1 + length xs
 index : {a : Type} ->
         (n : Nat) -> (l : List a) -> (ok : lt n (length l) == True) -> a
 index Z     (x :: xs) p    = x
-index (S n) (x :: xs) p    = index n xs {! ?indexTailProof !}
-index _     []        Refl   impossible
+index (S n) (x :: xs) p    = index n xs p
+index n     []        ()
+
+
 
 -- ||| Attempt to find a particular element of a list.
 -- |||
@@ -79,6 +83,7 @@ index' Z     (x :: xs) = Just x
 index' (S n) (x :: xs) = index' n xs
 index' _     []        = Nothing
 
+{-
 -- ||| Get the first element of a non-empty list
 -- ||| @ ok proof that the list is non-empty
 head : {a : Type} ->
@@ -1026,4 +1031,5 @@ zipWith3TailProof' = proof {
     rewrite (succInjective (length ys) (length zs) q);
     trivial;
 }
+-}
 -}

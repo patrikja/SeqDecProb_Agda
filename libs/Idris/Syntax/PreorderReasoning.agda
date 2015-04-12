@@ -1,5 +1,5 @@
-module Syntax.PreorderReasoning where
-open import Builtins
+module Idris.Syntax.PreorderReasoning where
+open import Idris.Builtins
 
 module Equal where
     qed : {a : Type} ->

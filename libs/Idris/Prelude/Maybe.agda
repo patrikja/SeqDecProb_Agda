@@ -1,12 +1,12 @@
-module Prelude.Maybe where
+module Idris.Prelude.Maybe where
 
-open import Builtins
--- import Prelude.Algebra
--- import Prelude.Basics
--- import Prelude.Bool
--- import Prelude.Cast
--- import Prelude.Classes
--- import Prelude.Foldable
+open import Idris.Builtins
+-- import Idris.Prelude.Algebra
+-- import Idris.Prelude.Basics
+-- import Idris.Prelude.Bool
+-- import Idris.Prelude.Cast
+-- import Idris.Prelude.Classes
+-- import Idris.Prelude.Foldable
 
 data Maybe (a : Type) : Type where
   Nothing : Maybe a

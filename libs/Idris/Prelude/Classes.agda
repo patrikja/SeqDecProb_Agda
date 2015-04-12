@@ -1,8 +1,8 @@
-module Prelude.Classes where
+module Idris.Prelude.Classes where
 
-open import Builtins
-open import Prelude.Basics
-open import Prelude.Bool
+open import Idris.Builtins
+open import Idris.Prelude.Basics
+open import Idris.Prelude.Bool
 
 {- TODO
 -- Numerical Operator Precedence

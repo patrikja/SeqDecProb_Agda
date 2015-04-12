@@ -1,12 +1,12 @@
-module Prelude.Either where
+module Idris.Prelude.Either where
 
-open import Builtins
-open import Syntax.PreorderReasoning
--- import Prelude.Basics
-open import Prelude.Bool
--- import Prelude.Classes
--- import Prelude.Maybe
--- import Prelude.List
+open import Idris.Builtins
+open import Idris.Syntax.PreorderReasoning
+-- import Idris.Prelude.Basics
+open import Idris.Prelude.Bool
+-- import Idris.Prelude.Classes
+-- import Idris.Prelude.Maybe
+-- import Idris.Prelude.List
 
 -- ||| A sum type
 data Either (a : Type) (b : Type) : Type where
@@ -20,13 +20,13 @@ data Either (a : Type) (b : Type) : Type where
 --------------------------------------------------------------------------------
 
 -- ||| True if the argument is Left, False otherwise
-isLeft : {a : Type} -> {b : Type} -> 
+isLeft : {a : Type} -> {b : Type} ->
          Either a b -> Bool
 isLeft (Left l)  = True
 isLeft (Right r) = False
 
 -- ||| True if the argument is Right, False otherwise
-isRight : {a : Type} -> {b : Type} -> 
+isRight : {a : Type} -> {b : Type} ->
           Either a b -> Bool
 isRight (Left l)  = False
 isRight (Right r) = True
@@ -39,7 +39,7 @@ isRight (Right r) = True
 -- ||| @ f the action to take on Left
 -- ||| @ g the action to take on Right
 -- ||| @ e the sum to analyze
-either : {a : Type} -> {b : Type} -> {c : Type} -> 
+either : {a : Type} -> {b : Type} -> {c : Type} ->
          (f : Lazy (a -> c)) -> (g : Lazy (b -> c)) -> (e : Either a b) -> c
 either l r (Left x)  = (Force l) x
 either l r (Right x) = (Force r) x
@@ -80,7 +80,7 @@ fromEither (Right r) = r
 {-
 -- ||| Convert a Maybe to an Either by using a default value in case of Nothing
 -- ||| @ e the default value
-maybeToEither : {a : Type} -> {e : Type} ->             
+maybeToEither : {a : Type} -> {e : Type} ->
                 (def : Lazy e) -> Maybe a -> Either e a
 maybeToEither def (Just j) = Right j
 maybeToEither def Nothing  = Left  def

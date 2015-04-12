@@ -1,8 +1,8 @@
-module Control.Isomorphism where
-open import Prelude.Basics
-open import Syntax.PreorderReasoning
-open import Prelude.Either
-import Data.Fin
+module Idris.Control.Isomorphism where
+open import Idris.Prelude.Basics
+open import Idris.Syntax.PreorderReasoning
+open import Idris.Prelude.Either
+import Idris.Data.Fin
 -- %default total
 
 -- ||| An isomorphism between two types
@@ -202,7 +202,7 @@ pairBotRight = isoTrans pairComm pairBotLeft
 
 
 pairEq : {a : Type} -> {b : Type} ->
-         {x : a} -> {x' : a} -> {y : b} -> {y' : b} -> 
+         {x : a} -> {x' : a} -> {y : b} -> {y' : b} ->
          (x == x') -> (y == y') -> ((x , y) == (x' , y'))
 pairEq Refl Refl = Refl
 

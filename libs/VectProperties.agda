@@ -1,19 +1,19 @@
 module VectProperties where
 
+open import Idris.Builtins
+open import Idris.Data.Vect
+-- import Idris.Data.Vect.Quantifiers
+open import Idris.Prelude.Nat
+open import Idris.Data.Fin
+-- import Idris.Syntax.PreorderReasoning
+-- import Idris.Decidable.Order
 
-import Data.Vect
--- import Data.Vect.Quantifiers
-open import Data.Nat renaming (ℕ to Nat)
-open import Data.Fin
--- import Syntax.PreorderReasoning
--- import Decidable.Order
-
--- import Prop
--- import VectOperations
--- import Decidable
--- import Order
--- import NatProperties
--- import Util
+-- import Idris.Prop
+-- import Idris.VectOperations
+-- import Idris.Decidable
+-- import Idris.Order
+-- import Idris.NatProperties
+-- import Idris.Util
 
 
 {-
@@ -24,19 +24,23 @@ instance Uninhabited (Elem {a} x Nil) where
 
 -- Indexing and lookup
 
-indexLemma : {n : Nat} -> (k : Fin n) -> (xs : Vect n t) -> Elem (index k xs) xs
-indexLemma {n = Z}       k   Nil      = absurd k
+indexLemma : {t : Type} -> {n : Nat} ->
+             (k : Fin n) -> (xs : Vect n t) -> Elem (index k xs) xs
+indexLemma {n = Z}       k   Nil      = {!!} -- absurd k
 indexLemma {n = S m}  FZ    (x :: xs) = Here
 indexLemma {n = S m} (FS k) (x :: xs) = There (indexLemma k xs)
 
-indexLookupLemma : (x : alpha) ->
+{- TODO
+indexLookupLemma : {alpha : Type} -> {n : Nat} ->
+                   (x : alpha) ->
                    (xs : Vect n alpha) ->
                    (prf : Elem x xs) ->
-                   index (lookup x xs prf) xs = x
+                   index (lookup x xs prf) xs == x
 indexLookupLemma x  Nil        prf        = absurd prf
 indexLookupLemma x (x :: xs)   Here       = Refl
 indexLookupLemma x (x' :: xs) (There prf) =
   let ih = indexLookupLemma x xs prf in {! rewrite ih in Refl!}
+-}
 {-
 indexLookupLemma x (x' :: xs) (There prf) = trans s1 (trans s2 s3) where
   s1 : index (lookup x (x' :: xs) (There prf)) (x' :: xs)
@@ -53,6 +57,7 @@ indexLookupLemma x (x' :: xs) (There prf) = trans s1 (trans s2 s3) where
   s3 = indexLookupLemma x xs prf
 -}
 
+{-
 %assert_total
 lookupIndexLemma : (k : Fin n) ->
                    (xs : Vect n t) ->
@@ -250,4 +255,5 @@ maxLemma {A} {F} {TO} {n = S m} af (af' :: (af'' :: afs)) (There prf) with (orde
 
 -}
 
+-}
 -}

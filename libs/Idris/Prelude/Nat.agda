@@ -1,13 +1,13 @@
 module Idris.Prelude.Nat where
 
-open import Builtins
+open import Idris.Builtins
 
--- import Prelude.Algebra
-open import Prelude.Basics
+-- import Idris.Prelude.Algebra
+open import Idris.Prelude.Basics
 open import Idris.Prelude.Bool
--- import Prelude.Cast
--- import Prelude.Classes
--- import Prelude.Uninhabited
+-- import Idris.Prelude.Cast
+-- import Idris.Prelude.Classes
+-- import Idris.Prelude.Uninhabited
 
 -- %access public
 -- %default total
