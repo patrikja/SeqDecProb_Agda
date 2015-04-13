@@ -83,78 +83,75 @@ index' Z     (x :: xs) = Just x
 index' (S n) (x :: xs) = index' n xs
 index' _     []        = Nothing
 
-{-
+
 -- ||| Get the first element of a non-empty list
 -- ||| @ ok proof that the list is non-empty
 head : {a : Type} ->
-       (l : List a) -> {auto ok : isCons l == True} -> a
-head []        {ok=Refl}   impossible
-head (x :: xs) {ok=p}    = x
+       (l : List a) -> {ok : isCons l == True} -> a
+head []         {ok = ()}
+head (x :: xs)  {ok = p}    = x
+
 
 -- ||| Attempt to get the first element of a list. If the list is empty, return
 -- ||| `Nothing`.
 head' : {a : Type} ->
         (l : List a) -> Maybe a
-head' []      = Nothing
+head' []        = Nothing
 head' (x :: xs) = Just x
+
 
 -- ||| Get the tail of a non-empty list.
 -- ||| @ ok proof that the list is non-empty
 tail : {a : Type} ->
-       (l : List a) -> {auto ok : isCons l == True} -> List a
-tail []        {ok=Refl}   impossible
-tail (x :: xs) {ok=p}    = xs
+       (l : List a) -> {ok : isCons l == True} -> List a
+tail []        {ok = ()}
+tail (x :: xs) {ok = p}    = xs
+
 
 -- ||| Attempt to get the tail of a list.
 -- |||
 -- ||| If the list is empty, return `Nothing`.
 tail' : {a : Type} ->
         (l : List a) -> Maybe (List a)
-tail' []      = Nothing
+tail' []        = Nothing
 tail' (x :: xs) = Just xs
 
 -- ||| Retrieve the last element of a non-empty list.
 -- ||| @ ok proof that the list is non-empty
 last : {a : Type} ->
-       (l : List a) -> {auto ok : isCons l == True} -> a
-last []         {ok=Refl}   impossible
-last [ x ]           {ok=p}    = x
-last ( x :: y :: ys) {ok=p}    = last (y :: ys) {ok = Refl}
+       (l : List a) -> {ok : isCons l == True} -> a
+last []              {ok = ()}
+last ( x :: [])      {ok = p}    = x
+last ( x :: y :: ys) {ok = p}    = last (y :: ys) {ok = Refl}
+
 
 -- ||| Attempt to retrieve the last element of a non-empty list.
 -- |||
 -- ||| If the list is empty, return `Nothing`.
 last' : {a : Type} ->
         (l : List a) -> Maybe a
-last' []      = Nothing
-last' (x::xs) = ? -- TODO
---  case xs of
---    []      -> Just x
---    y :: ys -> last' xs
+last' []        = Nothing
+last' (x :: []) = Just x
+last' (x :: xs) = last' xs
 
 -- ||| Return all but the last element of a non-empty list.
 -- ||| @ ok proof that the list is non-empty
 init : {a : Type} ->
-       (l : List a) -> {auto ok : isCons l == True} -> List a
-init []              {ok=Refl}   impossible
-init [ x ]           {ok=p}    = []
-init ( x :: y :: ys) {ok=p}    = x :: init (y :: ys) {ok = Refl}
+       (l : List a) -> {ok : isCons l == True} -> List a
+init []             {ok = ()}
+init (x :: [])      {ok = p}    = []
+init (x :: y :: ys) {ok = p}    = x :: init (y :: ys) {ok = Refl}
 
 -- ||| Attempt to Return all but the last element of a list.
 -- |||
 -- ||| If the list is empty, return `Nothing`.
 init' : {a : Type} ->
         (l : List a) -> Maybe (List a)
-init' []      = Nothing
-init' (x::xs) = ? -- TODO
-{-  case xs of
-    []    -> Just []
-    y::ys =>
-      -- XXX: Problem with typechecking a "do" block here
-      case init' $ y::ys of
-        Nothing -> Nothing
-        Just j  -> Just $ x :: j
--}
+init' []        = Nothing
+init' (x :: []) = Just []
+init' (x :: xs) with init' xs
+... | Nothing = Nothing
+... | Just j  = Just (x :: j)
 
 --------------------------------------------------------------------------------
 -- Sublists
@@ -198,7 +195,7 @@ takeWhile p (x :: xs) = if p x then x :: takeWhile p xs else []
 dropWhile : {a : Type} ->
             (p : a -> Bool) -> List a -> List a
 dropWhile p []      = []
-dropWhile p (x :: xs) = if p x then dropWhile p xs else x :: xs
+dropWhile p (x :: xs) = if p x then dropWhile p xs else (x :: xs)
 
 --------------------------------------------------------------------------------
 -- Misc.
@@ -235,28 +232,56 @@ replicate (S n) x = x :: replicate n x
 --------------------------------------------------------------------------------
 -- Instances
 --------------------------------------------------------------------------------
+EqDict' : Type -> Type
+EqDict' a = a -> a -> Bool
+
+record EqDict (a : Type) : Type where
+  field
+    _===_ : EqDict' a
+  _/=_ : EqDict' a
+  x /= y = not (x === y)
+
+eqList : {a : Type} -> EqDict a -> EqDict' (List a)
+eqList eqa []        []        = True
+eqList eqa []        (x :: ys) = False
+eqList eqa (x :: xs) []        = False
+eqList eqa (x :: xs) (y :: ys) = if x === y then eqList eqa xs ys else False
+  where open EqDict eqa
+
+eqDictList : {a : Type} -> EqDict a -> EqDict (List a)
+eqDictList eqa = record {_===_ = eqList eqa}
+
 {- TODO
 instance (Eq a) => Eq (List a) where
-  (==) []      []      = True
-  (==) (x::xs) (y::ys) =
-    if x == y then
-      xs == ys
-    else
-      False
-  (==) _ _ = False
+  (==) = eqList (==)
 -}
 
-{- TODO
-instance Ord a => Ord (List a) where
-  compare [] [] = EQ
-  compare [] _ = LT
-  compare _ [] = GT
-  compare (x::xs) (y::ys) =
-    if x /= y then
-      compare x y
-    else
-      compare xs ys
+OrdDict' : Type -> Type
+OrdDict' a = a -> a -> Ordering
 
+-- OrdDict : Type -> Type
+record OrdDict (a : Type) : Type where
+  field
+    eqDict  : EqDict a
+    compare : OrdDict' a
+  open EqDict eqDict public
+
+compareList : {a : Type} -> OrdDict a -> OrdDict' (List a)
+compareList orda [] [] = Ordering.EQ
+compareList orda [] _ = Ordering.LT
+compareList orda _ [] = Ordering.GT
+compareList orda (x :: xs) (y :: ys) =
+    if (x /= y) then  compare x y
+    else              compareList orda xs ys
+  where open OrdDict orda
+
+ordDictList : {a : Type} -> OrdDict a -> OrdDict (List a)
+ordDictList orda = record {eqDict = eqDictList eqDict; compare = compareList orda}
+  where open OrdDict orda
+
+-- instance Ord a => Ord (List a) where
+
+{- TODO
 instance Semigroup (List a) where
   (<+>) = (++)
 
@@ -273,10 +298,13 @@ map : {a : Type} -> {b : Type} ->
 map f []        = []
 map f (x :: xs) = f x :: map f xs
 
+
+
 --------------------------------------------------------------------------------
 -- Zips and unzips
 --------------------------------------------------------------------------------
 
+{-
 -- ||| Combine two lists of the same length elementwise using some function.
 -- ||| @ f the function to combine elements with
 -- ||| @ l the first list
@@ -285,10 +313,11 @@ map f (x :: xs) = f x :: map f xs
 zipWith : {a : Type} -> {b : Type} -> {c : Type} ->
           (f : a -> b -> c) -> (l : List a) -> (r : List b) ->
   (ok : length l == length r) -> List c
-zipWith f []        (y :: ys) Refl   impossible
-zipWith f (x :: xs) []        Refl   impossible
+zipWith f []        (y :: ys) ()
+zipWith f (x :: xs) []        ()
 zipWith f []        []        p    = []
-zipWith f (x :: xs) (y :: ys) p    = f x y :: (zipWith f xs ys {! ?zipWithTailProof !})
+zipWith f (x :: xs) (y :: ys) p    = f x y :: (zipWith f xs ys {!!}) -- {! ?zipWithTailProof !}
+
 
 -- ||| Combine three lists of the same length elementwise using some function.
 -- ||| @ f the function to combine elements with

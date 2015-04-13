@@ -1,6 +1,7 @@
 module VectProperties where
 
 open import Idris.Builtins
+import Idris.Prelude.List as List
 open import Idris.Data.Vect
 -- import Idris.Data.Vect.Quantifiers
 open import Idris.Prelude.Nat
@@ -26,21 +27,22 @@ instance Uninhabited (Elem {a} x Nil) where
 
 indexLemma : {t : Type} -> {n : Nat} ->
              (k : Fin n) -> (xs : Vect n t) -> Elem (index k xs) xs
-indexLemma {n = Z}       k   Nil      = {!!} -- absurd k
+indexLemma {n = Z}    ()    Nil
 indexLemma {n = S m}  FZ    (x :: xs) = Here
 indexLemma {n = S m} (FS k) (x :: xs) = There (indexLemma k xs)
 
-{- TODO
+
 indexLookupLemma : {alpha : Type} -> {n : Nat} ->
                    (x : alpha) ->
                    (xs : Vect n alpha) ->
                    (prf : Elem x xs) ->
-                   index (lookup x xs prf) xs == x
+                   index (List.lookup x xs prf) xs == x
 indexLookupLemma x  Nil        prf        = absurd prf
 indexLookupLemma x (x :: xs)   Here       = Refl
 indexLookupLemma x (x' :: xs) (There prf) =
   let ih = indexLookupLemma x xs prf in {! rewrite ih in Refl!}
--}
+
+{- TODO -}
 {-
 indexLookupLemma x (x' :: xs) (There prf) = trans s1 (trans s2 s3) where
   s1 : index (lookup x (x' :: xs) (There prf)) (x' :: xs)

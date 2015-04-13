@@ -2,7 +2,7 @@ module Idris.Data.Vect where
 
 open import Idris.Builtins
 open import Idris.Prelude.Basics
-open import Idris.Prelude.List
+open import Idris.Prelude.List as List
 -- open import Idris.Language.Reflection
 open import Idris.Data.VectType
 open import Idris.Prelude.Nat
@@ -62,6 +62,6 @@ replaceByElem (x :: xs) Here y = y :: xs
 replaceByElem (x :: xs) (There xinxs) y = x :: replaceByElem xs xinxs y
 
 mapElem : {k : Nat} -> {t u : Type} -> {x : t}
-          {xs : Vect k t} -> {f : t -> u} -> Elem x xs -> Elem (f x) (map f xs)
-mapElem Here = Here
+          {xs : Vect k t} -> {f : t -> u} -> Elem x xs -> Elem (f x) (Vect.map f xs)
+mapElem Here      = Here
 mapElem (There e) = There (mapElem e)
