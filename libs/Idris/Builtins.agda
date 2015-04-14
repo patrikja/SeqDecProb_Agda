@@ -10,8 +10,14 @@ void ()
 
 infixr 2 _×_
 infixr 4 _,_
-data _×_ (a : Set) (b : Set) : Set where
-  _,_ : a -> b -> a × b
+-- data _×_ (a : Set) (b : Set) : Set where
+--   _,_ : a -> b -> a × b
+
+record _×_ (a : Set) (b : Set) : Set where
+   constructor _,_
+   field
+     fst : a
+     snd : b
 
 record Sigma (a : Type) (P : a -> Type) : Type where
     constructor MkSigma

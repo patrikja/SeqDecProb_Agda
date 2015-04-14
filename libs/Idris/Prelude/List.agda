@@ -16,7 +16,7 @@ open import Idris.Prelude.Nat
 
 -- infix 5 _\\_
 infixr 7 _::_
--- infixr 7 _++_
+infixr 7 _++_
 
 -- ||| Linked lists
 data List (a : Type) : Type where
@@ -304,7 +304,7 @@ map f (x :: xs) = f x :: map f xs
 -- Zips and unzips
 --------------------------------------------------------------------------------
 
-{-
+
 -- ||| Combine two lists of the same length elementwise using some function.
 -- ||| @ f the function to combine elements with
 -- ||| @ l the first list
@@ -316,7 +316,8 @@ zipWith : {a : Type} -> {b : Type} -> {c : Type} ->
 zipWith f []        (y :: ys) ()
 zipWith f (x :: xs) []        ()
 zipWith f []        []        p    = []
-zipWith f (x :: xs) (y :: ys) p    = f x y :: (zipWith f xs ys {!!}) -- {! ?zipWithTailProof !}
+zipWith f (x :: xs) (y :: ys) p    = f x y :: (zipWith f xs ys zipWithTailProof)
+  where  zipWithTailProof = succInjective (length xs) (length ys) p
 
 
 -- ||| Combine three lists of the same length elementwise using some function.
@@ -331,17 +332,19 @@ zipWith3 : {a : Type} -> {b : Type} -> {c : Type} -> {d : Type} ->
            (x : List a) -> (y : List b) -> (z : List c) ->
            (ok : length x == length y) ->
            (ok' : length y == length z) -> List d
-zipWith3 f _         []        (z :: zs) p    Refl   impossible
-zipWith3 f _         (y :: ys) []        p    Refl   impossible
-zipWith3 f []        (y :: ys) _         Refl q      impossible
-zipWith3 f (x :: xs) []        _         Refl q      impossible
+zipWith3 f x         []        (z :: zs) p    ()
+zipWith3 f _         (y :: ys) []        p    ()
+zipWith3 f []        (y :: ys) _         ()   q
+zipWith3 f (x :: xs) []        _         ()   q
 zipWith3 f []        []        []        p    q    = []
 zipWith3 f (x :: xs) (y :: ys) (z :: zs) p    q    =
-  f x y z :: (zipWith3 f xs ys zs {! ?zipWith3TailProof !} {! ?zipWith3TailProof'!} )
+  f x y z :: (zipWith3 f xs ys zs zipWith3TailProof zipWith3TailProof')
+    where zipWith3TailProof  = succInjective (length xs) (length ys) p
+          zipWith3TailProof' = succInjective (length ys) (length zs) q
 
 -- ||| Combine two lists elementwise into pairs
 zip : {a : Type} -> {b : Type} ->
-      (l : List a) -> (r : List b) -> (length l == length r) -> List (a , b)
+      (l : List a) -> (r : List b) -> (length l == length r) -> List (a × b)
 zip = zipWith (\x y -> (x , y))
 
 -- ||| Combine three lists elementwise into tuples
@@ -356,6 +359,7 @@ unzip : {a : Type} -> {b : Type} ->
 unzip []           = ([] , [])
 unzip ((l , r) :: xs) with (unzip xs)
 ... | (lefts , rights) = (l :: lefts , r :: rights)
+
 
 -- ||| Split a list of triples into three lists
 unzip3 : {a : Type} -> {b : Type} -> {c : Type} ->
@@ -373,12 +377,11 @@ unzip3 ((l , c , r) :: xs) with (unzip3 xs)
 mapMaybe : {a : Type} -> {b : Type} ->
            (a -> Maybe b) -> List a -> List b
 mapMaybe f []      = []
-mapMaybe f (x :: xs) = ? -- TODO
-{-
-  case f x of
-    Nothing -> mapMaybe f xs
-    Just j  -> j :: mapMaybe f xs
--}
+mapMaybe f (x :: xs) with f x
+... | Nothing = mapMaybe f xs
+... | Just j  = j :: mapMaybe f xs
+
+
 --------------------------------------------------------------------------------
 -- Folds
 --------------------------------------------------------------------------------
@@ -390,17 +393,20 @@ foldrImpl f e go [] = go e
 foldrImpl f e go (x :: xs) = foldrImpl f e (go ∘ (f x)) xs
 {-
 instance Foldable List where
-  foldr f e xs = foldrImpl f e id xs
 -}
+foldr : {t : Type} -> {acc : Type} ->
+        (t -> acc -> acc) -> acc -> List t -> acc
+foldr f e xs = foldrImpl f e id xs
 
 -- concat : (Foldable t, Monoid a) => t a -> a
 concat : {a : Type} ->
          List (List a) -> List a
-concat = foldrImpl _++_ []
+concat = foldr _++_ []
 
 foldl : {acc : Type} -> {elt : Type} ->
         (acc -> elt -> acc) -> acc -> List elt -> acc
-foldl f z t = foldrImpl (flip _∘_ ∘ flip f) id t z
+foldl f z t = foldr (flip _∘_ ∘ flip f) id t z
+
 
 --------------------------------------------------------------------------------
 -- Special folds
@@ -411,6 +417,7 @@ foldl f z t = foldrImpl (flip _∘_ ∘ flip f) id t z
 toList : Foldable t => t a -> List a
 toList = foldr _::_ []
 -}
+
 
 --------------------------------------------------------------------------------
 -- Transformations
@@ -459,13 +466,15 @@ intercalate sep l = concat (intersperse sep l)
 -- |||     transpose (transpose [[], [1, 2]]) = [[1, 2]]
 -- |||
 
+{-
 -- ||| TODO: Solution which satisfies the totality checker?
-%assert_total
+-- %assert_total
 transpose : {a : Type} ->
             List (List a) -> List (List a)
 transpose [] = []
 transpose ([] :: xss) = transpose xss
 transpose ((x :: xs) :: xss) = (x :: (mapMaybe head' xss)) :: (transpose (xs :: (map (drop 1) xss)))
+-}
 
 --------------------------------------------------------------------------------
 -- Membership tests
@@ -491,8 +500,7 @@ elem = elemBy (==)
 lookupBy : {a : Type} -> {b : Type} ->
            (a -> a -> Bool) -> a -> List (a × b) -> Maybe b
 lookupBy p e []      = Nothing
-lookupBy p e (x :: xs) =
-  let (l , r) = x in
+lookupBy p e ((l , r) :: xs) =
     if p e l then
       Just r
     else
@@ -514,6 +522,7 @@ hasAnyBy p elems (x :: xs) =
     True
   else
     hasAnyBy p elems xs
+
 
 -- ||| Check if any elements of the first list are found in the second, using
 -- ||| Boolean equality.
@@ -614,7 +623,7 @@ nubBy = nubBy' []
       if elemBy p x acc then
         nubBy' acc p xs
       else
-        x :: nubBy' (x :: acc) p xs
+        (x :: nubBy' (x :: acc) p xs)
 
 -- ||| O(n^2). The nub function removes duplicate elements from a list. In
 -- ||| particular, it keeps only the first occurrence of each element. It is a
@@ -633,7 +642,7 @@ nub = nubBy (==)
 deleteBy : {a : Type} ->
            (a -> a -> Bool) -> a -> List a -> List a
 deleteBy _  _ []        = []
-deleteBy eq x (y :: ys) = if eq x y then ys else y :: deleteBy eq x ys
+deleteBy eq x (y :: ys) = if eq x y then ys else (y :: deleteBy eq x ys)
 
 -- ||| `delete x` removes the first occurrence of `x` from its list argument. For
 -- ||| example,
@@ -712,13 +721,12 @@ break p = span (not ∘ p)
 -- ||| ```idris example
 -- ||| split (<2) [2,0,3,1,4]
 -- ||| ```
+{- TODO termination
 split : {a : Type} ->
         (a -> Bool) -> List a -> List (List a)
-split p xs = ?
-{- TODO
-  case break p xs of
-    (chunk, [])          -> [chunk]
-    (chunk, (c :: rest)) -> chunk :: split p (assert_smaller xs rest)
+split p xs with break p xs
+... | (chunk , [])          = chunk :: []
+... | (chunk , (c :: rest)) = chunk :: split p rest
 -}
 
 -- ||| A tuple where the first element is a List of the n first elements and
@@ -736,7 +744,7 @@ splitAt n xs = (take n xs , drop n xs)
 -- ||| partition (<3) [0, 1, 2, 3, 4, 5]
 -- ||| ```
 partition : {a : Type} ->
-            (a -> Bool) -> List a -> (List a , List a)
+            (a -> Bool) -> List a -> (List a × List a)
 partition p []        = ([] , [])
 partition p (x :: xs) =
   let (lefts , rights) = partition p xs in
@@ -751,14 +759,13 @@ partition p (x :: xs) =
 -- ||| ```idris example
 -- ||| inits [1,2,3]
 -- ||| ```
-{- TODO
+
 inits : {a : Type} ->
         List a -> List (List a)
-inits xs = [] :: case xs of
-  []        -> []
-  x :: xs'  -> map (x ::) (inits xs')
--}
+inits []         = [] :: []
+inits (x :: xs') = map (_::_ x) (inits xs')
 
+{-
 -- ||| The tails function returns all final segments of the argument, longest
 -- ||| first. For example,
 -- |||

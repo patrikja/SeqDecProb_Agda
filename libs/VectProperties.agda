@@ -31,7 +31,7 @@ indexLemma {n = Z}    ()    Nil
 indexLemma {n = S m}  FZ    (x :: xs) = Here
 indexLemma {n = S m} (FS k) (x :: xs) = There (indexLemma k xs)
 
-
+{- TODO
 indexLookupLemma : {alpha : Type} -> {n : Nat} ->
                    (x : alpha) ->
                    (xs : Vect n alpha) ->
@@ -42,7 +42,7 @@ indexLookupLemma x (x :: xs)   Here       = Refl
 indexLookupLemma x (x' :: xs) (There prf) =
   let ih = indexLookupLemma x xs prf in {! rewrite ih in Refl!}
 
-{- TODO -}
+-}
 {-
 indexLookupLemma x (x' :: xs) (There prf) = trans s1 (trans s2 s3) where
   s1 : index (lookup x (x' :: xs) (There prf)) (x' :: xs)
