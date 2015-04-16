@@ -9,12 +9,12 @@ open import Idris.Data.Fin
 -- import Idris.Syntax.PreorderReasoning
 -- import Idris.Decidable.Order
 
--- import Idris.Prop
--- import Idris.VectOperations
--- import Idris.Decidable
--- import Idris.Order
--- import Idris.NatProperties
--- import Idris.Util
+-- import Prop
+open import VectOperations
+-- import Decidable
+-- import Order
+-- import NatProperties
+-- import Util
 
 
 {-
@@ -31,44 +31,31 @@ indexLemma {n = Z}    ()    Nil
 indexLemma {n = S m}  FZ    (x :: xs) = Here
 indexLemma {n = S m} (FS k) (x :: xs) = There (indexLemma k xs)
 
-{- TODO
+
 indexLookupLemma : {alpha : Type} -> {n : Nat} ->
                    (x : alpha) ->
                    (xs : Vect n alpha) ->
                    (prf : Elem x xs) ->
-                   index (List.lookup x xs prf) xs == x
-indexLookupLemma x  Nil        prf        = absurd prf
-indexLookupLemma x (x :: xs)   Here       = Refl
-indexLookupLemma x (x' :: xs) (There prf) =
-  let ih = indexLookupLemma x xs prf in {! rewrite ih in Refl!}
+                   index (lookup x xs prf) xs == x
+indexLookupLemma x []          ()
+indexLookupLemma x (.x :: xs)  Here       = Refl
+indexLookupLemma x (x' :: xs) (There prf) = indexLookupLemma x xs prf
 
--}
-{-
-indexLookupLemma x (x' :: xs) (There prf) = trans s1 (trans s2 s3) where
-  s1 : index (lookup x (x' :: xs) (There prf)) (x' :: xs)
-       =
-       index (FS (lookup x xs prf)) (x' :: xs)
-  s1 = Refl
-  s2 : index (FS (lookup x xs prf)) (x' :: xs)
-       =
-       index (lookup x xs prf) xs
-  s2 = Refl
-  s3 : index (lookup x xs prf) xs
-       =
-       x
-  s3 = indexLookupLemma x xs prf
--}
 
-{-
-%assert_total
-lookupIndexLemma : (k : Fin n) ->
+{- TODO: wrong in the Idris code?
+-- %assert_total
+lookupIndexLemma : {t : Type} -> {n : Nat} ->
+                   (k : Fin n) ->
                    (xs : Vect n t) ->
                    (prf : Elem (index k xs) xs) ->
-                   lookup (index k xs) xs prf = k
-lookupIndexLemma  k      Nil       prf        = absurd prf
+                   lookup (index k xs) xs prf == k
+lookupIndexLemma i xs p = ?
 lookupIndexLemma  FZ    (x :: xs)  Here       = Refl
 lookupIndexLemma (FS k) (x :: xs) (There prf) =
   let ih = lookupIndexLemma k xs prf in {!rewrite ih in Refl!}
+-}
+
+
 
 
 -- Membership, quantifiers:
@@ -77,9 +64,10 @@ lookupIndexLemma (FS k) (x :: xs) (There prf) =
 elemLemma : {A : Type} -> {n : Nat} ->
             (a : A) -> (as : Vect n A) ->
             Elem a as -> LT Z n
-elemLemma {n = Z}   a Nil p = absurd p
-elemLemma {n = S m} a as  p = ltZS m
+elemLemma {n = Z}   a [] ()
+elemLemma {n = S m} a as p  = ltZS m
 
+{-
 
 AnyExistsLemma : {A : Type} -> {P : A -> Prop} -> Any P as -> Exists P
 AnyExistsLemma (Here {x} px) = Evidence x px
