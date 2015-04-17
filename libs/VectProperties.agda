@@ -13,7 +13,7 @@ open import Idris.Data.Fin
 open import VectOperations
 -- import Decidable
 -- import Order
--- import NatProperties
+open import NatProperties
 -- import Util
 
 
@@ -67,8 +67,8 @@ elemLemma : {A : Type} -> {n : Nat} ->
 elemLemma {n = Z}   a [] ()
 elemLemma {n = S m} a as p  = ltZS m
 
-{-
 
+{- TODO
 AnyExistsLemma : {A : Type} -> {P : A -> Prop} -> Any P as -> Exists P
 AnyExistsLemma (Here {x} px) = Evidence x px
 AnyExistsLemma (There prf) = AnyExistsLemma prf

@@ -14,7 +14,9 @@ open import Idris.Prelude.Bool
 
 -- ||| Unary natural numbers
 data Nat : Type where
+  -- ||| Zero
   Z : Nat
+  -- ||| Successor
   S : Nat -> Nat
 
 {-# BUILTIN NATURAL Nat #-}
@@ -98,7 +100,7 @@ hyper (S pn)   a (S pb) = hyper pn a (hyper (S pn) a pb)
 -- ||| Proofs that `n` is less than or equal to `m`
 -- ||| @ n the smaller number
 -- ||| @ m the larger number
-data LTE : (m : Nat)(n : Nat) -> Type where
+data LTE : (n m : Nat) -> Type where
   -- ||| Zero is the smallest Nat
   LTEZero : {right : Nat} -> LTE Z    right
   -- ||| If n <= m, then n + 1 <= m + 1
@@ -131,6 +133,16 @@ isLTE (S k) Z = No succNotLTEzero
 isLTE (S k) (S j) with (isLTE k j)
 isLTE (S k) (S j) | (Yes prf) = Yes (LTESucc prf)
 isLTE (S k) (S j) | (No contra) = No (contra ∘ fromLteSucc)
+
+-- ||| `LTE` is reflexive.
+lteRefl : {n : Nat} -> LTE n n
+lteRefl {n = Z}   = LTEZero
+lteRefl {n = S k} = LTESucc lteRefl
+
+-- ||| n < m implies n < m + 1
+lteSuccRight : {n m : Nat} -> LTE n m -> LTE n (S m)
+lteSuccRight LTEZero     = LTEZero
+lteSuccRight (LTESucc x) = LTESucc (lteSuccRight x)
 
 -- ||| Boolean test than one Nat is less than or equal to another
 lte : Nat -> Nat -> Bool
@@ -358,21 +370,21 @@ lcm x y = divNat (x * y) (gcd x y)
 --------------------------------------------------------------------------------
 -- An informative comparison view
 --------------------------------------------------------------------------------
-data CmpNat : (x : Nat) (y : Nat) -> Type where
+data CmpNat : Nat -> Nat -> Type where
      CmpLT : {x : Nat} -> (y : _) -> CmpNat x (x + S y)
      CmpEQ : {x : Nat} -> CmpNat x x
      CmpGT : {y : Nat} -> (x : _) -> CmpNat (y + S x) y
 
-{- TODO
+
 cmp : (x y : Nat) -> CmpNat x y
 cmp Z Z     = CmpEQ
 cmp Z (S k) = CmpLT _
 cmp (S k) Z = CmpGT _
 cmp (S x) (S y) with (cmp x y)
-cmp (S x) (S (x + (S k))) | CmpLT k = CmpLT k
-cmp (S x) (S x)           | CmpEQ   = CmpEQ
-cmp (S (y + (S k))) (S y) | CmpGT k = CmpGT k
--}
+cmp (S x) (S .(plus x (S y))) | CmpLT y = CmpLT y
+cmp (S x) (S .x)              | CmpEQ   = CmpEQ
+cmp (S .(plus y (S x))) (S y) | CmpGT x = CmpGT x
+
 
 --------------------------------------------------------------------------------
 -- Properties
