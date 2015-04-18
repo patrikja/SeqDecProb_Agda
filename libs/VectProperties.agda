@@ -3,7 +3,7 @@ module VectProperties where
 open import Idris.Builtins
 import Idris.Prelude.List as List
 open import Idris.Data.Vect
--- import Idris.Data.Vect.Quantifiers
+open import Idris.Data.Vect.Quantifiers
 open import Idris.Prelude.Nat
 open import Idris.Data.Fin
 -- import Idris.Syntax.PreorderReasoning
