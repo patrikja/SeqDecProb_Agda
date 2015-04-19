@@ -1,6 +1,7 @@
 module VectProperties where
 
 open import Idris.Builtins
+open import Idris.Prelude.Basics
 import Idris.Prelude.List as List
 open import Idris.Data.Vect
 open import Idris.Data.Vect.Quantifiers
@@ -15,8 +16,7 @@ open import VectOperations
 open import Decidable
 -- import Order
 open import NatProperties
--- import Util
-
+open import Util
 
 {-
 instance Uninhabited (Elem {a} x Nil) where
@@ -86,29 +86,29 @@ decAny : {A : Type} -> {P : A -> Pro} -> {n : Nat} ->
          Dec1 {A} P -> Dec1 {Vect n A} (Any P)
 decAny d1P = any d1P
 
-{- TODO
 -- Container monad properties
 
-mapLemma : {A, B : Type} -> (as : Vect n A) -> (f : A -> B) ->
+mapLemma : {A B : Type} -> {n : Nat} -> (as : Vect n A) -> (f : A -> B) ->
            (a : A) -> Elem a as -> Elem (f a) (map f as)
-mapLemma  Nil      f a aeas = absurd aeas
-mapLemma (a :: as) f a   Here       = Here
+mapLemma  []       f a   ()
+mapLemma (a :: as) f .a  Here       = Here
 mapLemma (a :: as) f a' (There prf) = There (mapLemma as f a' prf)
 
+mapIdfLemma : {A B : Type} -> {n : Nat} -> (as : Vect n A) -> (f : A -> B) ->
+              (ab : A × B) -> Elem ab (map (pair (id , f)) as) ->
+              f (fst ab) == snd ab
+mapIdfLemma  []       f ab             ()
+mapIdfLemma (x :: as) f (.x , .(f x))  Here       = Refl
+mapIdfLemma (x :: as) f ab             (There p)  = mapIdfLemma as f ab p
 
-mapIdfLemma : {A, B : Type} -> (as : Vect n A) -> (f : A -> B) ->
-              (ab : (A,B)) -> Elem ab (map (pair (id,f)) as) ->
-              f (fst ab) = snd ab
-mapIdfLemma  Nil      f  ab     p        = absurd p
-mapIdfLemma (a :: as) f (a, _)  Here     = Refl
-mapIdfLemma (a :: as) f  ab    (There p) = mapIdfLemma as f ab p
-
+{- TODO
 
 -- Filtering
 
 -- ||| |filter| preserves membership
 filterLemma : {A : Type} ->
               {P : A -> Type} ->
+              {n : Nat} ->
               (d1P : Dec1 P) ->
               (a : A) ->
               (as : Vect n A) ->
@@ -124,6 +124,9 @@ filterLemma {A} {P} d1P a1 (a2 :: as) (There prf) p with (filter d1P as)
 ... | (n ** as') with (d1P a2)
 ...   | (Yes _) = {! ?issue1920.0 -- There {x = a1} {xs = as'} {y = a2} (filterLemma d1P a1 as prf p)!}
 ...   | (No  _) = {! ?issue1920.1 -- filterLemma {A} {P} d1P a1 as prf p !}
+
+
+
 
 
 -- ||| |filterTag| preserves membership
