@@ -7,11 +7,12 @@ open import Idris.Data.Vect.Quantifiers
 open import Idris.Prelude.Nat
 open import Idris.Data.Fin
 -- import Idris.Syntax.PreorderReasoning
--- import Idris.Decidable.Order
+open import Idris.Decidable.Order
+open import Idris.Prelude.Pairs
 
--- import Prop
+open import Pro
 open import VectOperations
--- import Decidable
+open import Decidable
 -- import Order
 open import NatProperties
 -- import Util
@@ -68,19 +69,24 @@ elemLemma {n = Z}   a [] ()
 elemLemma {n = S m} a as p  = ltZS m
 
 
-{- TODO
-AnyExistsLemma : {A : Type} -> {P : A -> Prop} -> Any P as -> Exists P
-AnyExistsLemma (Here {x} px) = Evidence x px
-AnyExistsLemma (There prf) = AnyExistsLemma prf
 
-ElemAnyLemma : {A : Type} -> {P : A -> Prop} -> P a -> Elem a as -> Any P as
-ElemAnyLemma p Here = Here p
+AnyExistsLemma : {A : Type} -> {P : A -> Pro} -> {n : Nat} -> {as : Vect n A} -> Any P as -> Exists P
+AnyExistsLemma (Here {x} px) = Evidence _ px
+AnyExistsLemma (There prf)   = AnyExistsLemma prf
+
+
+ElemAnyLemma : {A : Type} -> {P : A -> Pro} ->
+               {a : A} -> {n : Nat} -> {as : Vect n A} ->
+               P a -> Elem a as -> Any P as
+ElemAnyLemma p Here      = Here p
 ElemAnyLemma p (There e) = There (ElemAnyLemma p e)
 
-decAny : {A : Type} -> {P : A -> Prop} -> Dec1 P -> Dec1 (Any P)
+
+decAny : {A : Type} -> {P : A -> Pro} -> {n : Nat} ->
+         Dec1 {A} P -> Dec1 {Vect n A} (Any P)
 decAny d1P = any d1P
 
-
+{- TODO
 -- Container monad properties
 
 mapLemma : {A, B : Type} -> (as : Vect n A) -> (f : A -> B) ->

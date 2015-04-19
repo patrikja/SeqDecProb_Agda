@@ -22,8 +22,8 @@ record _×_ (a : Set) (b : Set) : Set where
 record Sigma (a : Type) (P : a -> Type) : Type where
     constructor MkSigma
     field
-      x : a
-      pf : P x
+      getWitness : a
+      getProof   : P getWitness
 
 -- data Sigma (a : Type) (P : a -> Type) : Type where
 --    MkSigma : (x : a) -> (pf : P x) -> Sigma a P
