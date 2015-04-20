@@ -1,7 +1,7 @@
 module Decidable where
 
 open import Idris.Builtins
-open import Idris.Prelude.Basics
+open import Idris.Prelude.Basics public
 
 Dec0 : Type -> Set1
 Dec0 = Dec

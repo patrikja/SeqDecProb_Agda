@@ -2,11 +2,11 @@ module VectOperations where
 
 open import Idris.Builtins
 open import Idris.Prelude.Nat
-open import Idris.Data.Vect
+open import Idris.Data.Vect hiding (filter)
 open import Idris.Data.Fin
 -- import Data.So
 
--- import Decidable
+open import Decidable
 -- import TotalPreorder
 -- import TotalPreorderOperations
 -- import NatProperties
@@ -20,7 +20,7 @@ lookup {n = Z}   a  Nil        ()
 lookup {n = S m} a (.a :: as)  Here       = FZ
 lookup {n = S m} a (a' :: as) (There prf) = FS (lookup a as prf)
 
-{-
+
 -- Container monad operations
 
 -- Filtering
@@ -28,16 +28,17 @@ lookup {n = S m} a (a' :: as) (There prf) = FS (lookup a as prf)
 -- ||| Filters a vector on a decidable property
 filter : {A : Type} ->
          {P : A -> Type} ->
+         {n : Nat} ->
          Dec1 P ->
          Vect n A ->
          Sigma Nat (\m -> Vect m A)
-filter d1P Nil = (Z ** Nil)
+filter d1P [] = MkSigma Z []
 filter d1P (a :: as) with (filter d1P as)
-... | (n ** as') with (d1P a)
-... | (Yes _) = (S n ** a :: as')
-... | (No  _) = (n ** as')
+... | MkSigma m as' with (d1P a)
+...  | Yes prf   = MkSigma (S m) (a :: as')
+...  | No contra = MkSigma    m        as'
 
-
+{-
 > ||| Filters a vector on a decidable property and pairs elements with proofs
 > filterTag : {A : Type} ->
 >             {P : A -> Type} ->

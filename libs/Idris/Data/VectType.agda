@@ -486,38 +486,46 @@ module Vect where
   --------------------------------------------------------------------------------
   -- Filters
   --------------------------------------------------------------------------------
-{- TODO
+
   -- ||| Find all elements of a vector that satisfy some test
-  filter : (a -> Bool) -> Vect n a -> (p ** Vect p a)
-  filter p [] = ( _ ** [] )
+  filter : {a : Type} -> {n : Nat} ->
+           (a -> Bool) -> Vect n a -> Sigma Nat (\p -> Vect p a)
+  filter p [] = MkSigma _ []
   filter p (x :: xs) with (filter p xs)
-  ... | (_ ** tail) =
+  ... | MkSigma _ tail =
       if p x then
-        (_ ** x :: tail)
+        MkSigma _ (x :: tail)
       else
-        (_ ** tail)
+        MkSigma _ tail
+
 
   -- ||| Make the elements of some vector unique by some test
-  nubBy : (a -> a -> Bool) -> Vect n a -> (p ** Vect p a)
+  nubBy : {a : Type} -> {n : Nat} ->
+          (a -> a -> Bool) -> Vect n a -> Sigma Nat (\p -> Vect p a)
   nubBy = nubBy' []
     where
-      nubBy' : Vect m a -> (a -> a -> Bool) -> Vect n a -> (p ** Vect p a)
-      nubBy' acc p []      = (_ ** [])
+      nubBy' : {a : Type} -> {m n : Nat} ->
+               Vect m a -> (a -> a -> Bool) -> Vect n a -> Sigma Nat (\p -> Vect p a)
+      nubBy' acc p []      = MkSigma _ []
       nubBy' acc p (x :: xs) with (elemBy p x acc)
       ...  | True  = nubBy' acc p xs
       ...  | False with (nubBy' (x :: acc) p xs)
-      ...    | (_ ** tail) = (_ ** x :: tail)
+      ...             | MkSigma _ tail = MkSigma _ (x :: tail)
 
+{- TODO
   -- ||| Make the elements of some vector unique by the default Boolean equality
   nub : Eq a => Vect n a -> (p ** Vect p a)
   nub = nubBy (==)
+-}
 
-  deleteBy : (a -> a -> Bool) -> a -> Vect n a -> (p ** Vect p a)
-  deleteBy _  _ []      = (_ ** [])
+  deleteBy : {a : Type} -> {n : Nat} ->
+             (a -> a -> Bool) -> a -> Vect n a -> Sigma Nat (\p -> Vect p a)
+  deleteBy _  _ []      = MkSigma _ []
   deleteBy eq x (y :: ys) =
-    let (len ** zs) = deleteBy eq x ys
-    in if x `eq` y then (_ ** ys) else (S len ** y  :: zs)
+    let MkSigma len zs = deleteBy eq x ys
+    in if eq x y then MkSigma _ ys else MkSigma (S len) (y :: zs)
 
+{- TODO
   delete : (Eq a) => a -> Vect n a -> (p ** Vect p a)
   delete = deleteBy (==)
 

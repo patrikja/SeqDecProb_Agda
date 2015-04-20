@@ -3,7 +3,7 @@ module VectProperties where
 open import Idris.Builtins
 open import Idris.Prelude.Basics
 import Idris.Prelude.List as List
-open import Idris.Data.Vect
+open import Idris.Data.Vect hiding (filter)
 open import Idris.Data.Vect.Quantifiers
 open import Idris.Prelude.Nat
 open import Idris.Data.Fin
@@ -101,7 +101,7 @@ mapIdfLemma  []       f ab             ()
 mapIdfLemma (x :: as) f (.x , .(f x))  Here       = Refl
 mapIdfLemma (x :: as) f ab             (There p)  = mapIdfLemma as f ab p
 
-{- TODO
+
 
 -- Filtering
 
@@ -114,20 +114,20 @@ filterLemma : {A : Type} ->
               (as : Vect n A) ->
               Elem a as ->
               (p : P a) ->
-              Elem a (getProof (filter d1P as))
-filterLemma d1P a   Nil       prf  p = absurd prf
-filterLemma d1P a1 (a1 :: as) Here p with (filter d1P as)
+              Elem a (Sigma.getProof (filter d1P as))
+filterLemma d1P a   []         ()
+filterLemma d1P a1 (.a1 :: as) Here p with (filter d1P as)
 ... | (MkSigma n as') with (d1P a1)
-... | (Yes _) = Here {x = a1} {xs = as'}
+... | (Yes _)      = Here {x = a1} {xs = as'}
 ... | (No  contra) = void (contra p)
-filterLemma {A} {P} d1P a1 (a2 :: as) (There prf) p with (filter d1P as)
-... | (n ** as') with (d1P a2)
-...   | (Yes _) = {! ?issue1920.0 -- There {x = a1} {xs = as'} {y = a2} (filterLemma d1P a1 as prf p)!}
-...   | (No  _) = {! ?issue1920.1 -- filterLemma {A} {P} d1P a1 as prf p !}
+filterLemma d1P a1 (a2 :: as) (There prf) p
+    with filter d1P as  |  filterLemma d1P a1 as prf p
+...    | MkSigma n as'  |  q with (d1P a2)
+filterLemma d1P a1 (a2 :: as) (There prf) p
+       | MkSigma _ _    |  q    | Yes prf2 = There q
+...                             | (No  _)  = q
 
-
-
-
+{- TODO
 
 -- ||| |filterTag| preserves membership
 filterTagLemma : {A : Type} ->

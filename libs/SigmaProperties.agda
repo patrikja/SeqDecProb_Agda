@@ -32,8 +32,8 @@ open Iso
 
 sigmaEqLemma2 : {A : Type} -> {P : A -> Type} ->
                 {s1 : Sigma A P} -> {s2 : Sigma A P} ->
-                Sigma.x  s1  ==  Sigma.x  s2 ->
-                Sigma.pf s1  ==  Sigma.pf s2 ->
+                Sigma.getWitness  s1  ==  Sigma.getWitness  s2 ->
+                Sigma.getProof s1  ==  Sigma.getProof s2 ->
                 s1 == s2
 sigmaEqLemma2 {s1 = MkSigma a b} {MkSigma .a .b} Refl Refl = Refl
 
@@ -96,11 +96,11 @@ sigmaIsoLemma A A' B B' isoA isoB = MkIso toAB fromAB toFromAB fromToAB
                  b''    = subst   B' (sym (toFrom isoA a')) b'
                  eqb''  : b'' == b'
                  eqb''  = substEq B' (sym (toFrom isoA a')) b'
-                 lem = Sigma.pf (fromAB (toAB (MkSigma a b)))
+                 lem = Sigma.getProof (fromAB (toAB (MkSigma a b)))
                          ==< Refl >==
-                       Sigma.pf (fromAB (MkSigma (toA a) (toB a b)))
+                       Sigma.getProof (fromAB (MkSigma (toA a) (toB a b)))
                          ==< Refl >==
-                       Sigma.pf (MkSigma {A} {B} a'' (fromB a'' b'') )
+                       Sigma.getProof (MkSigma {A} {B} a'' (fromB a'' b'') )
                          ==< Refl >==
                        fromB a'' b''
                          ==< cong2 fromB eqa eqb'' >==
