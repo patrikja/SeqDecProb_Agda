@@ -38,19 +38,21 @@ filter d1P (a :: as) with (filter d1P as)
 ...  | Yes prf   = MkSigma (S m) (a :: as')
 ...  | No contra = MkSigma    m        as'
 
-{-
-> ||| Filters a vector on a decidable property and pairs elements with proofs
-> filterTag : {A : Type} ->
->             {P : A -> Type} ->
->             Dec1 P ->
->             Vect n A ->
->             (m : Nat ** Vect m (Sigma A P))
-> filterTag d1P Nil = (Z ** Nil)
-> filterTag d1P (a :: as) with (filterTag d1P as)
->   | (_ ** tail) with (d1P a)
->     | (Yes p)     = (_ ** (a ** p) :: tail)
->     | (No contra) = (_ ** tail)
 
+-- ||| Filters a vector on a decidable property and pairs elements with proofs
+filterTag : {A : Type} ->
+            {P : A -> Type} ->
+            {n : Nat} ->
+            Dec1 P ->
+            Vect n A ->
+            Sigma Nat (\m -> Vect m (Sigma A P))
+filterTag d1P [] = MkSigma Z []
+filterTag d1P (a :: as) with (filterTag d1P as)
+... | MkSigma _ tail with (d1P a)
+... | (Yes p)     = MkSigma _ (MkSigma a p :: tail)
+... | (No contra) = MkSigma _ tail
+
+{- TODO
 
 Searching
 

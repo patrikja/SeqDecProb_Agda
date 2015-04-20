@@ -127,28 +127,29 @@ filterLemma d1P a1 (a2 :: as) (There prf) p
        | MkSigma _ _    |  q    | Yes prf2 = There q
 ...                             | (No  _)  = q
 
-{- TODO
+
 
 -- ||| |filterTag| preserves membership
 filterTagLemma : {A : Type} ->
                  {P : A -> Type} ->
+                 {n : Nat} ->
                  (d1P : Dec1 P) ->
                  (a : A) ->
                  (as : Vect n A) ->
                  Elem a as ->
                  (p : P a) ->
-                 Elem a (map Sigma.getWitness (getProof (filterTag d1P as)))
-filterTagLemma d1P a   Nil       prf  p = absurd prf
-filterTagLemma d1P a1 (a1 :: as) Here p with (filterTag d1P as)
-...  | (n ** aps') with (d1P a1)
-...    | (Yes _) = Here {x = a1} {xs = map Sigma.getWitness aps'}
+                 Elem a (map Sigma.getWitness (Sigma.getProof (filterTag d1P as)))
+filterTagLemma d1P a   []       ()
+filterTagLemma d1P a1 (.a1 :: as) Here p with (filterTag d1P as)
+...  | MkSigma n aps' with (d1P a1)
+...    | (Yes _)      = Here
 ...    | (No  contra) = void (contra p)
-filterTagLemma d1P a1 (a2 :: as) (There prf) p with (filterTag d1P as)
-...  | (n ** aps') with (d1P a2)
-...    | (Yes _) = {! ?issue1920.2 !}-- There {x = a1} {xs = map Sigma.getWitness aps'} {y = a2} (filterTagLemma d1P a1 as prf p)
-...    | (No  _) = {! ?issue1920.3 !}-- filterTagLemma d1P a1 as prf p
+filterTagLemma d1P a1 (a2 :: as) (There prf) p with filterTag d1P as  |  filterTagLemma d1P a1 as prf p
+...  | MkSigma n aps' | q with (d1P a2)
+filterTagLemma d1P a1 (a2 :: as) (There _) p | MkSigma n₁ aps' | q | Yes _  = There q
+filterTagLemma d1P a1 (a2 :: as) (There _) p | MkSigma n₁ aps' | q | No _   = q
 
-
+{- TODO
 -- Max and argmax
 
 {-
