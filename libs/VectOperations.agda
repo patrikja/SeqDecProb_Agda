@@ -7,9 +7,9 @@ open import Idris.Data.Fin
 -- import Data.So
 
 open import Decidable
--- import TotalPreorder
+open import TotalPreorder
 -- import TotalPreorderOperations
--- import NatProperties
+open import NatProperties
 
 
 -- Lookup
@@ -52,20 +52,20 @@ filterTag d1P (a :: as) with (filterTag d1P as)
 ... | (Yes p)     = MkSigma _ (MkSigma a p :: tail)
 ... | (No contra) = MkSigma _ tail
 
+
+
+-- Searching
+
+argmaxMax : {A : Type} -> {n : Nat} ->
+            TotalPreorder A -> Vect n A -> LT Z n -> (Fin n × A)
+argmaxMax {n = Z}       tp  []                 ()
+argmaxMax {n = S Z}     tp (a :: [])           _ = (FZ , a)
+argmaxMax {n = S (S m)} tp (a' :: (a'' :: as)) _ with (argmaxMax tp (a'' :: as) (ltZS m))
+... | (k , max) with (TotalPreorder.total tp a' max)
+...         | Left  x  = (FS k , max)
+...         | Right x  = (FZ , a')
+
 {- TODO
-
-Searching
-
-> |||
-> argmaxMax : {A : Type} ->
->             TotalPreorder A -> Vect n A -> LT Z n -> (Fin n, A)
-> argmaxMax {n = Z}       tp  Nil                p = absurd p
-> argmaxMax {n = S Z}     tp (a :: Nil)          _ = (FZ, a)
-> argmaxMax {n = S (S m)} tp (a' :: (a'' :: as)) _ with (argmaxMax tp (a'' :: as) (ltZS m))
->   | (k, max) with (either tp a' max)
->     | (Left  _) = (FS k, max)
->     | (Right _) = (FZ, a')
-
 
 > |||
 > argmax : {A : Type} ->

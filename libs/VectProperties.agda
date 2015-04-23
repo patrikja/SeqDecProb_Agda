@@ -144,10 +144,10 @@ filterTagLemma d1P a1 (.a1 :: as) Here p with (filterTag d1P as)
 ...  | MkSigma n aps' with (d1P a1)
 ...    | (Yes _)      = Here
 ...    | (No  contra) = void (contra p)
-filterTagLemma d1P a1 (a2 :: as) (There prf) p with filterTag d1P as  |  filterTagLemma d1P a1 as prf p
-...  | MkSigma n aps' | q with (d1P a2)
-filterTagLemma d1P a1 (a2 :: as) (There _) p | MkSigma n₁ aps' | q | Yes _  = There q
-filterTagLemma d1P a1 (a2 :: as) (There _) p | MkSigma n₁ aps' | q | No _   = q
+filterTagLemma d1P a1 (a2 :: as) (There prf) p
+  with filterTag d1P as  |  filterTagLemma d1P a1 as prf p  |  (d1P a2)
+...  | MkSigma _ _ | q | Yes _ = There q
+...  | MkSigma _ _ | q | No _  = q
 
 {- TODO
 -- Max and argmax
