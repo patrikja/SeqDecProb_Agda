@@ -14,10 +14,13 @@ data Fin : (n : Nat) -> Type where
 instance Uninhabited (Fin Z) where
   uninhabited FZ impossible
   uninhabited (FS f) impossible
+-}
 
-FSInjective : (m : Fin k) -> (n : Fin k) -> FS m = FS n -> m = n
-FSInjective left _ Refl = Refl
+FSInjective : {k : Nat} ->
+              (m : Fin k) -> (n : Fin k) -> FS m == FS n -> m == n
+FSInjective m .m Refl = Refl
 
+{- TODO
 instance Eq (Fin n) where
     (==) FZ FZ = True
     (==) (FS k) (FS k') = k == k'

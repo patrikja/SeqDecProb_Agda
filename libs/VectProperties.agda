@@ -24,6 +24,29 @@ instance Uninhabited (Elem {a} x Nil) where
   uninhabited (There p) impossible
 -}
 
+-- Injectivity (of |flip index|):
+
+-- ||| Injectivity (one direction)
+Injective1 : {t : Type} -> {n : Nat} ->
+             Vect n t -> Type
+Injective1 {t} {n} xs = (i : Fin n) -> (j : Fin n) -> index i xs == index j xs  ->  i == j
+
+
+-- ||| Injectivity (the other direction)
+Injective2 : {t : Type} -> {n : Nat} ->
+             Vect n t -> Type
+Injective2 {t} {n} xs = (i : Fin n) -> (j : Fin n) -> Not (i == j) -> Not (index i xs == index j xs)
+
+help : {n : Nat} -> {i j : Fin n} ->
+       Not (i == j) -> Not (FS i == FS j)
+help nij Refl = nij Refl
+
+tailInj2 :  {t : Type} -> {n : Nat} ->
+            (x : t) -> (xs : Vect n t) -> Injective2 (x :: xs) -> Injective2 xs
+tailInj2 x xs inj2  i j nij nindij = inj2 (FS i) (FS j) (help nij) nindij
+
+
+
 -- Indexing and lookup
 
 indexLemma : {t : Type} -> {n : Nat} ->
@@ -42,22 +65,29 @@ indexLookupLemma x []          ()
 indexLookupLemma x (.x :: xs)  Here       = Refl
 indexLookupLemma x (x' :: xs) (There prf) = indexLookupLemma x xs prf
 
+-- Elem can be seen as a Fin n with a proof
+elemToIndex : {a : Type} -> {n : Nat} ->
+              (x : a) -> (xs : Vect n a) ->
+              Elem x xs -> Sigma (Fin n) (\i -> x == index i xs)
+elemToIndex x ._ Here = MkSigma FZ Refl
+elemToIndex x (._ :: xs) (There el) with elemToIndex x xs el
+elemToIndex x (._ :: xs) (There el) | MkSigma j p = MkSigma (FS j) p
 
-{- TODO: wrong in the Idris code?
--- %assert_total
 lookupIndexLemma : {t : Type} -> {n : Nat} ->
                    (k : Fin n) ->
                    (xs : Vect n t) ->
-                   (prf : Elem (index k xs) xs) ->
-                   lookup (index k xs) xs prf == k
-lookupIndexLemma i xs p = ?
-lookupIndexLemma  FZ    (x :: xs)  Here       = Refl
-lookupIndexLemma (FS k) (x :: xs) (There prf) =
-  let ih = lookupIndexLemma k xs prf in {!rewrite ih in Refl!}
--}
+                   (p : Injective2 xs) ->
+                   (q : Elem (index k xs) xs) ->
+                   lookup (index k xs) xs q == k
+lookupIndexLemma k [] p ()
+lookupIndexLemma FZ (x :: xs) inj2 Here = Refl
 
-
-
+lookupIndexLemma FZ (x :: xs) inj2 (There q) with elemToIndex _ _ q
+lookupIndexLemma FZ (x :: xs) inj2 (There q) | MkSigma j z with inj2 FZ (FS j) (\()) z
+... | ()    -- x is in two places which contradicts Injective2
+lookupIndexLemma (FS i) (.(index i xs) :: xs) inj2 Here with inj2 (FS i) FZ (\()) Refl
+... | ()    -- x is in two places which contradicts Injective2
+lookupIndexLemma (FS i) (x :: xs) inj2 (There q) = cong (lookupIndexLemma i xs (tailInj2 x xs inj2) q)
 
 -- Membership, quantifiers:
 
