@@ -79,7 +79,7 @@ lookupIndexLemma : {t : Type} -> {n : Nat} ->
                    (p : Injective2 xs) ->
                    (q : Elem (index k xs) xs) ->
                    lookup (index k xs) xs q == k
-lookupIndexLemma k [] p ()
+lookupIndexLemma k  []        inj2 ()
 lookupIndexLemma FZ (x :: xs) inj2 Here = Refl
 
 lookupIndexLemma FZ (x :: xs) inj2 (There q) with elemToIndex _ _ q
@@ -87,7 +87,7 @@ lookupIndexLemma FZ (x :: xs) inj2 (There q) | MkSigma j z with inj2 FZ (FS j) (
 ... | ()    -- x is in two places which contradicts Injective2
 lookupIndexLemma (FS i) (.(index i xs) :: xs) inj2 Here with inj2 (FS i) FZ (\()) Refl
 ... | ()    -- x is in two places which contradicts Injective2
-lookupIndexLemma (FS i) (x :: xs) inj2 (There q) = cong (lookupIndexLemma i xs (tailInj2 x xs inj2) q)
+lookupIndexLemma (FS i) (x :: xs) inj2 (There q) = cong {f = FS} (lookupIndexLemma i xs (tailInj2 x xs inj2) q)
 
 -- Membership, quantifiers:
 
@@ -179,33 +179,40 @@ filterTagLemma d1P a1 (a2 :: as) (There prf) p
 ...  | MkSigma _ _ | q | Yes _ = There q
 ...  | MkSigma _ _ | q | No _  = q
 
-{- TODO
 -- Max and argmax
 
+maxLemma : {A : Type} -> {n : Nat} ->
+           (tp : TotalPreorder A) ->
+           (a : A) -> (as : Vect n A) -> (p : LT Z n) -> Elem a as ->
+           TotalPreorder.R tp a (max tp as p)
+maxLemma tp a as p x = {!!}
+{-
+maxLemma {n = Z}       tp a        Nil          ()  _
+maxLemma {n = S Z}     tp a (.a  :: Nil)         _  Here       = TotalPreorder.reflexive tp a
+maxLemma {n = S Z}     tp a (a' :: Nil)         _ (There ())
+maxLemma {n = S (S m)} tp a (.a :: (a'' :: as))  _  Here with (argmaxMax tp (a'' :: as) (ltZS m))
+...  | (k , max) with (TotalPreorder.totalPre tp a max)
+...    | (Left  p) = p
+...    | (Right _) = TotalPreorder.reflexive tp a
+maxLemma {n = S (S m)} tp a (a' :: (a'' :: as)) _ (There prf) with (argmaxMax tp (a'' :: as) (ltZS m))
+...  | (k , max) with (TotalPreorder.totalPre tp a' max)
+...    | (Left  _) = ? -- replace {P = \rec -> R tp a (snd rec)}
+                         -- (sym itsEqual)
+                         -- (maxLemma {n = S m} tp a (a'' :: as) (ltZS m) prf)
+...    | (Right p) = s3 where
+      open TotalPreorder
+      s1 : R tp a (snd (VectOperations.argmaxMax tp (a'' :: as) (ltZS m)))
+      s1 = maxLemma {n = S m} tp a (a'' :: as) (ltZS m) prf
+      s2 : R tp (snd (VectOperations.argmaxMax tp (a'' :: as) (ltZS m))) a'
+      s2 = ? -- replace {P = \rec -> R tp (snd rec) a'} itsEqual p
+      s3 : R tp a a'
+      s3 = transitive tp a (snd (VectOperations.argmaxMax tp (a'' :: as) (ltZS m))) a' s1 s2
+-}
+
+{- TODO
 {-
 
-maxLemma : {A : Type} -> {TO : A -> A -> Type} -> {pre : Preordered A TO} ->
-           (a : A) -> (as : Vect n A) -> (p : LT Z n) -> a `Elem` as ->
-           TO a (max as p)
-maxLemma {TO} {n = Z}       a  Nil                p  _          = absurd p
-maxLemma {TO} {n = S Z}     a (a :: Nil)          _  Here       = reflexive a
-maxLemma {TO} {n = S Z}     a (a' :: Nil)         _ (There prf) = absurd prf
-maxLemma {TO} {n = S (S m)} a (a :: (a'' :: as))  _  Here       with (argmaxMax (a'' :: as) (ltZS m))
-...  | (k, max) with (preorder a max)
-...    | (Left  p) = p
-...    | (Right _) = reflexive a
-maxLemma {TO} {n = S (S m)} a (a' :: (a'' :: as)) _ (There prf) with (argmaxMax (a'' :: as) (ltZS m))
-...  | (k, max) with (preorder a' max)
-...    | (Left  _) = {! ?issue1920.4 !} -- maxLemma {TO} {n = S m} a (a'' :: as) (ltZS m) prf
-...    | (Right p) = s3 where
-      s1 : TO a (snd (VectOperations.argmaxMax (a'' :: as) (ltZS m)))
-      s1 = maxLemma {TO} {n = S m} a (a'' :: as) (ltZS m) prf
-      s2 : TO (snd (VectOperations.argmaxMax (a'' :: as) (ltZS m))) a'
-      s2 = {! ?issue1920.5 !} -- p
-      s3 : TO a a'
-      s3 = transitive a (snd (VectOperations.argmaxMax (a'' :: as) (ltZS m))) a' s1 s2
-
-
+-- TODO
 argmaxLemma : {A : Type} -> {TO : A -> A -> Type} -> {pre : Preordered A TO} ->
               (as : Vect n A) -> (p : LT Z n) ->
               index (argmax as p) as = max as p

@@ -7,7 +7,7 @@ open import Idris.Data.Fin
 -- import Data.So
 
 open import Decidable
-open import TotalPreorder
+open import TotalPreorder public
 -- import TotalPreorderOperations
 open import NatProperties
 
@@ -60,23 +60,28 @@ argmaxMax : {A : Type} -> {n : Nat} ->
             TotalPreorder A -> Vect n A -> LT Z n -> (Fin n × A)
 argmaxMax {n = Z}       tp  []                 ()
 argmaxMax {n = S Z}     tp (a :: [])           _ = (FZ , a)
+argmaxMax {n = S (S m)} tp (a' :: (a'' :: as)) _ with (TotalPreorder.totalPre tp a' a'')
+... | Right x  = (FZ , a')
+... | Left  x with (argmaxMax tp (a'' :: as) (ltZS m))
+...   | (k , max) = (FS k , max)
+
+{-
 argmaxMax {n = S (S m)} tp (a' :: (a'' :: as)) _ with (argmaxMax tp (a'' :: as) (ltZS m))
-... | (k , max) with (TotalPreorder.total tp a' max)
+... | (k , max) with (TotalPreorder.totalPre tp a' max)
 ...         | Left  x  = (FS k , max)
 ...         | Right x  = (FZ , a')
+-}
+
+argmax : {A : Type} -> {n : Nat} ->
+         TotalPreorder A -> Vect n A -> LT Z n -> Fin n
+argmax tp as p = fst (argmaxMax tp as p)
+
+
+max : {A : Type} -> {n : Nat} ->
+      TotalPreorder A -> Vect n A -> LT Z n -> A
+max tp as p = snd (argmaxMax tp as p)
 
 {- TODO
-
-> |||
-> argmax : {A : Type} ->
->          TotalPreorder A -> Vect n A -> LT Z n -> Fin n
-> argmax tp as p = fst (argmaxMax tp as p)
-
-
-> |||
-> max : {A : Type} ->
->       TotalPreorder A -> Vect n A -> LT Z n -> A
-> max tp as p = snd (argmaxMax tp as p)
 
 
 > {-
