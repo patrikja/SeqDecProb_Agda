@@ -181,10 +181,49 @@ filterTagLemma d1P a1 (a2 :: as) (There prf) p
 
 -- Max and argmax
 
+upperBound : {A : Type} -> {n : Nat} -> TotalPreorder A -> Vect n A -> A -> Pro
+upperBound {A = A} tp as max = (a : A) -> Elem a as -> let _<=_ = TotalPreorder.R tp
+                                                       in a <= max
+
+upperBoundSing : {A : Type} -> (tp : TotalPreorder A) -> (a : A) ->
+                 upperBound tp (a :: []) a
+upperBoundSing tp a .a Here = TotalPreorder.reflexive tp a
+upperBoundSing tp a b (There ())
+
+upperBoundCons : {A : Type} -> {n : Nat} ->
+                 (tp : TotalPreorder A) -> (a a' : A) -> (as : Vect n A) -> (mx : A) ->
+                 (TotalPreorder.R tp a mx) ->
+                 Elem mx (a' :: as) ->
+                 upperBound tp (     a' :: as) mx ->
+                 upperBound tp (a :: a' :: as) mx
+upperBoundCons tp a a' as mx a<=mx el upbTail .a Here     = a<=mx
+upperBoundCons tp a a' as mx a<=mx el upbTail b (There p) = upbTail b p
+-- I think Elem mx (a' :: as) is equivalently to Sigma (Fin (S n)) (\i -> index i (a' :: as) == mx)
+-- TODO: This equivalence indicates that we should stick to one form (Elem or argmax), not both.
+
+ind2Elem : {A : Type}  -> {n : Nat} ->
+           (a : A)     -> (as : Vect n A) ->
+           (i : Fin n) -> (index i as == a) -> Elem a as
+ind2Elem a (.a :: as) FZ     Refl = Here
+ind2Elem a (x  :: as) (FS i) p    = There (ind2Elem a as i p)
+
+allAboutMax : {A : Type} -> {n : Nat} ->
+              (tp : TotalPreorder A) -> (as : Vect n A) -> LT Z n ->
+              Sigma (Fin n) (\i -> Sigma A (\max ->
+              (index i as == max) × (upperBound tp as max)))
+allAboutMax tp [] ()
+allAboutMax tp (mx :: [])      p = MkSigma FZ (MkSigma mx (Refl , upperBoundSing tp mx))
+allAboutMax {n = S (S m)} tp (a :: a' :: as) p with allAboutMax tp (a' :: as) (LTESucc LTEZero)
+... | MkSigma i' (MkSigma mx' (ind , upb)) with TotalPreorder.totalPre tp a mx'
+...   | Left  q = MkSigma (FS i') (MkSigma mx' (ind , upperBoundCons tp a a' as mx' q
+                                                        (ind2Elem mx' (a' :: as) i' ind) upb))
+...   | Right q = MkSigma FZ (MkSigma a (Refl , {!!})) -- TODO: finish the proof
+
 maxLemma : {A : Type} -> {n : Nat} ->
            (tp : TotalPreorder A) ->
            (a : A) -> (as : Vect n A) -> (p : LT Z n) -> Elem a as ->
-           TotalPreorder.R tp a (max tp as p)
+           let _<=_ = TotalPreorder.R tp
+           in a <= (max tp as p)
 maxLemma tp a as p x = {!!}
 {-
 maxLemma {n = Z}       tp a        Nil          ()  _
