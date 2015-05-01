@@ -181,6 +181,11 @@ filterTagLemma d1P a1 (a2 :: as) (There prf) p
 
 -- Max and argmax
 
+-- module MaxAndArgmax where
+-- TODO factor out {A : Type} -> (tp : TotalPreorder A)  from the definitions below to module parameters
+-- TODO introduce short names for record components for readability
+--   _<=_ = TotalPreorder.R tp
+
 upperBound : {A : Type} -> {n : Nat} -> TotalPreorder A -> Vect n A -> A -> Pro
 upperBound {A = A} tp as max = (a : A) -> Elem a as -> let _<=_ = TotalPreorder.R tp
                                                        in a <= max
@@ -198,8 +203,17 @@ upperBoundCons : {A : Type} -> {n : Nat} ->
                  upperBound tp (a :: a' :: as) mx
 upperBoundCons tp a a' as mx a<=mx el upbTail .a Here     = a<=mx
 upperBoundCons tp a a' as mx a<=mx el upbTail b (There p) = upbTail b p
--- I think Elem mx (a' :: as) is equivalently to Sigma (Fin (S n)) (\i -> index i (a' :: as) == mx)
+-- I think Elem mx (a' :: as) is equivalent to Sigma (Fin (S n)) (\i -> index i (a' :: as) == mx)
 -- TODO: This equivalence indicates that we should stick to one form (Elem or argmax), not both.
+
+upperBoundCons2 : {A : Type} -> {n : Nat} ->
+                 (tp : TotalPreorder A) -> (a a' : A) -> (as : Vect n A) -> (mx : A) ->
+                 (TotalPreorder.R tp mx a) ->
+                 Elem mx (a' :: as) ->
+                 upperBound tp (     a' :: as) a ->
+                 upperBound tp (a :: a' :: as) a
+upperBoundCons2 tp a a' as mx ord elmx upbTail .a Here = TotalPreorder.reflexive tp a
+upperBoundCons2 tp a a' as mx ord elmx upbTail b (There elb) = upbTail b elb
 
 ind2Elem : {A : Type}  -> {n : Nat} ->
            (a : A)     -> (as : Vect n A) ->
@@ -217,119 +231,30 @@ allAboutMax {n = S (S m)} tp (a :: a' :: as) p with allAboutMax tp (a' :: as) (L
 ... | MkSigma i' (MkSigma mx' (ind , upb)) with TotalPreorder.totalPre tp a mx'
 ...   | Left  q = MkSigma (FS i') (MkSigma mx' (ind , upperBoundCons tp a a' as mx' q
                                                         (ind2Elem mx' (a' :: as) i' ind) upb))
-...   | Right q = MkSigma FZ (MkSigma a (Refl , {!!})) -- TODO: finish the proof
+...   | Right q = MkSigma FZ      (MkSigma a   (Refl , upperBoundCons2 tp a a' as a' (TotalPreorder.transitive tp a' mx' a (upb a' Here) q) Here
+                                                                           (λ a₁ z → TotalPreorder.transitive tp a₁ mx' a (upb a₁ z   ) q)))
+
+max : {A : Type} -> {n : Nat} ->
+      TotalPreorder A -> Vect n A -> LT Z n -> A
+max tp as p with allAboutMax tp as p
+... | MkSigma _i (MkSigma mx _) = mx
 
 maxLemma : {A : Type} -> {n : Nat} ->
            (tp : TotalPreorder A) ->
            (a : A) -> (as : Vect n A) -> (p : LT Z n) -> Elem a as ->
            let _<=_ = TotalPreorder.R tp
            in a <= (max tp as p)
-maxLemma tp a as p x = {!!}
-{-
-maxLemma {n = Z}       tp a        Nil          ()  _
-maxLemma {n = S Z}     tp a (.a  :: Nil)         _  Here       = TotalPreorder.reflexive tp a
-maxLemma {n = S Z}     tp a (a' :: Nil)         _ (There ())
-maxLemma {n = S (S m)} tp a (.a :: (a'' :: as))  _  Here with (argmaxMax tp (a'' :: as) (ltZS m))
-...  | (k , max) with (TotalPreorder.totalPre tp a max)
-...    | (Left  p) = p
-...    | (Right _) = TotalPreorder.reflexive tp a
-maxLemma {n = S (S m)} tp a (a' :: (a'' :: as)) _ (There prf) with (argmaxMax tp (a'' :: as) (ltZS m))
-...  | (k , max) with (TotalPreorder.totalPre tp a' max)
-...    | (Left  _) = ? -- replace {P = \rec -> R tp a (snd rec)}
-                         -- (sym itsEqual)
-                         -- (maxLemma {n = S m} tp a (a'' :: as) (ltZS m) prf)
-...    | (Right p) = s3 where
-      open TotalPreorder
-      s1 : R tp a (snd (VectOperations.argmaxMax tp (a'' :: as) (ltZS m)))
-      s1 = maxLemma {n = S m} tp a (a'' :: as) (ltZS m) prf
-      s2 : R tp (snd (VectOperations.argmaxMax tp (a'' :: as) (ltZS m))) a'
-      s2 = ? -- replace {P = \rec -> R tp (snd rec) a'} itsEqual p
-      s3 : R tp a a'
-      s3 = transitive tp a (snd (VectOperations.argmaxMax tp (a'' :: as) (ltZS m))) a' s1 s2
--}
+maxLemma tp a as p x with allAboutMax tp as p
+... | MkSigma _i (MkSigma _mx (_ind , upb)) = upb a x
 
-{- TODO
-{-
+argmax : {A : Type} -> {n : Nat} ->
+         TotalPreorder A -> Vect n A -> LT Z n -> Fin n
+argmax tp as p with allAboutMax tp as p
+... | MkSigma i _ = i
 
--- TODO
-argmaxLemma : {A : Type} -> {TO : A -> A -> Type} -> {pre : Preordered A TO} ->
+argmaxLemma : {A : Type} -> {n : Nat} ->
+              (tp : TotalPreorder A) ->
               (as : Vect n A) -> (p : LT Z n) ->
-              index (argmax as p) as = max as p
-argmaxLemma {TO} {n = Z}        Nil              p = absurd p
-argmaxLemma {TO} {n = S Z}     (a :: Nil)        p = Refl
-argmaxLemma {TO} {n = S (S m)} (a' :: (a'' :: as)) p with (argmaxMax (a'' :: as) (ltZS m))
-...  | (k, max) with (preorder a' max)
-...    | (Left   _) = {! ?issue1920.6 !} -- argmaxLemma (a'' :: as) (ltZS m)
-...    | (Right  _) = Refl
-
-
-maxElemLemma : {A : Type} -> {TO : A -> A -> Type} -> {pre : Preordered A TO} ->
-               (as : Vect n A) -> (p : LT Z n) ->
-               Elem (max as p) as
-maxElemLemma {TO} {n = Z}        Nil                p = absurd p
-maxElemLemma {TO} {n = S Z}     (a :: Nil)          p = Here
-maxElemLemma {TO} {n = S (S m)} (a' :: (a'' :: as)) p with (argmaxMax (a'' :: as) (ltZS m))
-...  | (k, max) with (preorder a' max)
-...    | (Left   _) = {! ?issue1920.7 !} -- There (maxElemLemma (a'' :: as) (ltZS m))
-...    | (Right  _) = Here
-
-
-{-
-
-|||
-maxLemma : {A : Type} -> {TO : A -> A -> Type} -> Preordered A TO =>
-           (a : A) -> (as : Vect (S n) A) -> a `Elem` as ->
-           TO a (max as)
-maxLemma {TO} {n = Z}   a (a :: Nil)          Here       = reflexive a
-maxLemma {TO} {n = Z}   a (a' :: Nil)        (There prf) = absurd prf
-maxLemma {TO} {n = S m} a (a :: (a'' :: as))  Here with (preorder a (max (a'' :: as)))
-  | (Left  p) = p
-  | (Right _) = reflexive a
-maxLemma {TO} {n = S m} a (a' :: (a'' :: as)) (There prf) with (preorder a' (max (a'' :: as)))
-  | (Left  _) = maxLemma a (a'' :: as) prf
-  | (Right p) = s3 where
-    s1 : TO a (max (a'' :: as))
-    s1 = maxLemma a (a'' :: as) prf
-    s2 : TO (max (a'' :: as)) a'
-    s2 = p
-    s3 : TO a a'
-    s3 = transitive a (max (a'' :: as)) a' s1 s2
-
-
-|||
-argmaxLemma : {A : Type} -> {TO : A -> A -> Type} -> Preordered A TO =>
-              (as : Vect (S n) A) ->
-              index (argmax as) as = max as
-argmaxLemma {TO} {n = Z}   (a :: Nil) = Refl
-argmaxLemma {TO} {n = S m} (a :: (a' :: as)) with (preorder a (max (a' :: as)))
-  | (Left   _) = argmaxLemma (a' :: as)
-  | (Right  _) = Refl
-
--}
-
-
-{-
-
-|||
-maxLemma : {A, F : Type} -> {TO : F -> F -> Type} -> Ordered F TO =>
-           (af : (A,F)) -> (afs : Vect (S n) (A,F)) -> af `Elem` afs ->
-           TO (snd af) (max afs)
-maxLemma {A} {F} {TO} {n = Z}   af (af :: Nil)   Here       = reflexive (snd af)
-maxLemma {A} {F} {TO} {n = Z}   af (af' :: Nil) (There prf) = absurd prf
-maxLemma {A} {F} {TO} {n = S m} af (af :: (af'' :: afs)) Here with (order (snd af) (snd (argmaxMax (af'' :: afs))))
-  | (Left  p) = p
-  | (Right _) = reflexive (snd af)
-maxLemma {A} {F} {TO} {n = S m} af (af' :: (af'' :: afs)) (There prf) with (order (snd af') (snd (argmaxMax (af'' :: afs))))
-  | (Left  _) = maxLemma {A} {F} {TO} {n = m} af (af'' :: afs) prf
-  | (Right p) = s3 where
-    s1 : TO (snd af) (max (af'' :: afs))
-    s1 = maxLemma {A} {F} {TO} {n = m} af (af'' :: afs) prf
-    s2 : TO (max (af'' :: afs)) (snd af')
-    s2 = p
-    s3 : TO (snd af) (snd af')
-    s3 = transitive (snd af) (VectOperations.max (af'' :: afs)) (snd af') s1 s2
-
--}
-
--}
--}
+              index (argmax tp as p) as == max tp as p
+argmaxLemma tp as p with allAboutMax tp as p
+argmaxLemma tp as p | MkSigma i (MkSigma _mx (ind , _upb)) = ind

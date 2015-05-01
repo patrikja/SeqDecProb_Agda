@@ -72,15 +72,16 @@ argmaxMax {n = S (S m)} tp (a' :: (a'' :: as)) _ with (argmaxMax tp (a'' :: as) 
 ...         | Right x  = (FZ , a')
 -}
 
+{-
 argmax : {A : Type} -> {n : Nat} ->
          TotalPreorder A -> Vect n A -> LT Z n -> Fin n
 argmax tp as p = fst (argmaxMax tp as p)
-
-
+-}
+{-
 max : {A : Type} -> {n : Nat} ->
       TotalPreorder A -> Vect n A -> LT Z n -> A
 max tp as p = snd (argmaxMax tp as p)
-
+-}
 {- TODO
 
 
