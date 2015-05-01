@@ -181,80 +181,76 @@ filterTagLemma d1P a1 (a2 :: as) (There prf) p
 
 -- Max and argmax
 
--- module MaxAndArgmax where
--- TODO factor out {A : Type} -> (tp : TotalPreorder A)  from the definitions below to module parameters
--- TODO introduce short names for record components for readability
---   _<=_ = TotalPreorder.R tp
-
-upperBound : {A : Type} -> {n : Nat} -> TotalPreorder A -> Vect n A -> A -> Pro
-upperBound {A = A} tp as max = (a : A) -> Elem a as -> let _<=_ = TotalPreorder.R tp
-                                                       in a <= max
-
-upperBoundSing : {A : Type} -> (tp : TotalPreorder A) -> (a : A) ->
-                 upperBound tp (a :: []) a
-upperBoundSing tp a .a Here = TotalPreorder.reflexive tp a
-upperBoundSing tp a b (There ())
-
-upperBoundCons : {A : Type} -> {n : Nat} ->
-                 (tp : TotalPreorder A) -> (a a' : A) -> (as : Vect n A) -> (mx : A) ->
-                 (TotalPreorder.R tp a mx) ->
-                 Elem mx (a' :: as) ->
-                 upperBound tp (     a' :: as) mx ->
-                 upperBound tp (a :: a' :: as) mx
-upperBoundCons tp a a' as mx a<=mx el upbTail .a Here     = a<=mx
-upperBoundCons tp a a' as mx a<=mx el upbTail b (There p) = upbTail b p
--- I think Elem mx (a' :: as) is equivalent to Sigma (Fin (S n)) (\i -> index i (a' :: as) == mx)
+-- I think Elem mx as is equivalent to Sigma (Fin (S n)) (\i -> index i as == mx)
 -- TODO: This equivalence indicates that we should stick to one form (Elem or argmax), not both.
-
-upperBoundCons2 : {A : Type} -> {n : Nat} ->
-                 (tp : TotalPreorder A) -> (a a' : A) -> (as : Vect n A) -> (mx : A) ->
-                 (TotalPreorder.R tp mx a) ->
-                 Elem mx (a' :: as) ->
-                 upperBound tp (     a' :: as) a ->
-                 upperBound tp (a :: a' :: as) a
-upperBoundCons2 tp a a' as mx ord elmx upbTail .a Here = TotalPreorder.reflexive tp a
-upperBoundCons2 tp a a' as mx ord elmx upbTail b (There elb) = upbTail b elb
-
 ind2Elem : {A : Type}  -> {n : Nat} ->
            (a : A)     -> (as : Vect n A) ->
            (i : Fin n) -> (index i as == a) -> Elem a as
 ind2Elem a (.a :: as) FZ     Refl = Here
 ind2Elem a (x  :: as) (FS i) p    = There (ind2Elem a as i p)
 
-allAboutMax : {A : Type} -> {n : Nat} ->
-              (tp : TotalPreorder A) -> (as : Vect n A) -> LT Z n ->
-              Sigma (Fin n) (\i -> Sigma A (\max ->
-              (index i as == max) × (upperBound tp as max)))
-allAboutMax tp [] ()
-allAboutMax tp (mx :: [])      p = MkSigma FZ (MkSigma mx (Refl , upperBoundSing tp mx))
-allAboutMax {n = S (S m)} tp (a :: a' :: as) p with allAboutMax tp (a' :: as) (LTESucc LTEZero)
-... | MkSigma i' (MkSigma mx' (ind , upb)) with TotalPreorder.totalPre tp a mx'
-...   | Left  q = MkSigma (FS i') (MkSigma mx' (ind , upperBoundCons tp a a' as mx' q
-                                                        (ind2Elem mx' (a' :: as) i' ind) upb))
-...   | Right q = MkSigma FZ      (MkSigma a   (Refl , upperBoundCons2 tp a a' as a' (TotalPreorder.transitive tp a' mx' a (upb a' Here) q) Here
-                                                                           (λ a₁ z → TotalPreorder.transitive tp a₁ mx' a (upb a₁ z   ) q)))
+module MaxAndArgmax {A : Type} (tp : TotalPreorder A) where
+-- factors out the common parameters A and tp from the definitions
+-- introduce a few short names for record components for readability
+  open TotalPreorder tp  -- brings R, reflexive, ... into scope
+  _<=_ = R
 
-max : {A : Type} -> {n : Nat} ->
-      TotalPreorder A -> Vect n A -> LT Z n -> A
-max tp as p with allAboutMax tp as p
-... | MkSigma _i (MkSigma mx _) = mx
+  upperBound : {n : Nat} -> Vect n A -> A -> Pro
+  upperBound as max = forall (a : A) -> Elem a as -> (a <= max)
 
-maxLemma : {A : Type} -> {n : Nat} ->
-           (tp : TotalPreorder A) ->
-           (a : A) -> (as : Vect n A) -> (p : LT Z n) -> Elem a as ->
-           let _<=_ = TotalPreorder.R tp
-           in a <= (max tp as p)
-maxLemma tp a as p x with allAboutMax tp as p
-... | MkSigma _i (MkSigma _mx (_ind , upb)) = upb a x
+  -- The only element in a singleton list is an upper bound
+  upperBoundSing : (a : A) -> upperBound (a :: []) a
+  upperBoundSing a .a Here = reflexive a
+  upperBoundSing a b (There ())
 
-argmax : {A : Type} -> {n : Nat} ->
-         TotalPreorder A -> Vect n A -> LT Z n -> Fin n
-argmax tp as p with allAboutMax tp as p
-... | MkSigma i _ = i
+  upperBoundCons : {n : Nat} ->
+                   (a a' : A) -> (as : Vect n A) -> (mx : A) ->
+                   (a <= mx) ->
+                   Elem mx         (a' :: as) ->
+                   upperBound (     a' :: as) mx ->
+                   upperBound (a :: a' :: as) mx
+  upperBoundCons a a' as mx a<=mx el upbTail .a Here     = a<=mx
+  upperBoundCons a a' as mx a<=mx el upbTail b (There p) = upbTail b p
 
-argmaxLemma : {A : Type} -> {n : Nat} ->
-              (tp : TotalPreorder A) ->
-              (as : Vect n A) -> (p : LT Z n) ->
-              index (argmax tp as p) as == max tp as p
-argmaxLemma tp as p with allAboutMax tp as p
-argmaxLemma tp as p | MkSigma i (MkSigma _mx (ind , _upb)) = ind
+  upperBoundCons2 : {n : Nat} ->
+                    (mx a' : A) -> (as : Vect n A) ->
+                    upperBound (      a' :: as) mx ->
+                    upperBound (mx :: a' :: as) mx
+  upperBoundCons2 mx a' as upbTail .mx Here       = reflexive mx
+  upperBoundCons2 mx a' as upbTail b (There elb)  = upbTail b elb
+
+  allAboutMax : {n : Nat} ->
+                (as : Vect n A) -> LT Z n ->
+                Sigma (Fin n) (\i ->     Sigma A (\max ->
+                         (index i as == max) × (upperBound as max)))
+  allAboutMax [] ()
+  allAboutMax (mx :: [])      p = MkSigma FZ (MkSigma mx (Refl , upperBoundSing mx))
+  allAboutMax {n = S (S m)} (a :: a' :: as) p with allAboutMax (a' :: as) (LTESucc LTEZero)
+  ... | MkSigma i' (MkSigma mx' (ind , upb)) with totalPre a mx'
+  ...   | Left  q = MkSigma (FS i') (MkSigma mx' (ind  , upperBoundCons a a' as mx' q
+                                                           (ind2Elem mx' (a' :: as) i' ind) upb))
+  ...   | Right q = MkSigma FZ      (MkSigma a   (Refl , upperBoundCons2 a a' as
+                                                           (λ a₁ z → transitive a₁ mx' a (upb a₁ z   ) q)))
+  max : {n : Nat} ->
+        Vect n A -> LT Z n -> A
+  max as p with allAboutMax as p
+  ... | MkSigma _i (MkSigma mx _) = mx
+
+  maxLemma : {n : Nat} ->
+             (a : A) -> (as : Vect n A) -> (p : LT Z n) -> Elem a as ->
+             (a <= max as p)
+  maxLemma a as p x with allAboutMax as p
+  ... | MkSigma _i (MkSigma _mx (_ind , upb)) = upb a x
+
+  argmax : {n : Nat} ->
+           Vect n A -> LT Z n -> Fin n
+  argmax as p with allAboutMax as p
+  ... | MkSigma i _ = i
+
+  argmaxLemma : {n : Nat} ->
+                (as : Vect n A) -> (p : LT Z n) ->
+                index (argmax as p) as == max as p
+  argmaxLemma as p with allAboutMax as p
+  argmaxLemma as p | MkSigma i (MkSigma _mx (ind , _upb)) = ind
+
+open MaxAndArgmax public
