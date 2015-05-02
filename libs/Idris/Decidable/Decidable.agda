@@ -1,5 +1,5 @@
 module Idris.Decidable.Decidable where
-
+open import Idris.Prelude.Basics public
 -- import Data.Rel
 -- import Data.Fun
 

@@ -1,9 +1,10 @@
 module NatProperties where
 open import Idris.Prelude.Basics
 open import Idris.Prelude.Nat
--- import Decidable.Order
--- import Preorder
--- import TotalPreorder
+open import Idris.Prelude.Either
+open import Idris.Decidable.Order
+open import Preorder
+open import TotalPreorder
 
 {-
 instance Uninhabited (S n = Z) where
@@ -102,46 +103,45 @@ monotoneNatPlusLTE : {x : Nat} -> {y : Nat} ->
 monotoneNatPlusLTE {x} {y}  Z    xLTEy = xLTEy
 monotoneNatPlusLTE {x} {y} (S n) xLTEy = LTESucc (monotoneNatPlusLTE {x} {y} n xLTEy)
 
-{- TODO
 
 reflexiveLTE : (n : Nat) -> LTE n n
 reflexiveLTE n = lteRefl {n}
 
-> transitiveLTE : (m : Nat) -> (n : Nat) -> (o : Nat) ->
->                 LTE m n -> LTE n o -> LTE m o
-> transitiveLTE  Z       n     o   LTEZero                 nlteo  = LTEZero
-> transitiveLTE (S m) (S n) (S o) (LTESucc mlten) (LTESucc nlteo) = LTESucc (transitiveLTE m n o mlten nlteo)
+transitiveLTE : (m : Nat) -> (n : Nat) -> (o : Nat) ->
+                LTE m n -> LTE n o -> LTE m o
+transitiveLTE  Z       n     o   LTEZero                 nlteo  = LTEZero
+transitiveLTE (S m) (S n) (S o) (LTESucc mlten) (LTESucc nlteo) = LTESucc (transitiveLTE m n o mlten nlteo)
+
+totalLTE : (m : Nat) -> (n : Nat) -> Either (LTE m n) (LTE n m)
+totalLTE  Z    n     = Left LTEZero
+totalLTE (S m) Z     = Right LTEZero
+totalLTE (S m) (S n) with (totalLTE m n)
+... | (Left  p) = Left  (LTESucc p)
+... | (Right p) = Right (LTESucc p)
+
+preorderNatLTE : Preorder Nat
+preorderNatLTE =
+  MkPreorder LTE reflexiveLTE transitiveLTE
+
+totalPreorderNatLTE : TotalPreorder Nat
+totalPreorderNatLTE =
+  MkTotalPreorder LTE reflexiveLTE transitiveLTE totalLTE
+
+-- Decidability
 
 
-> totalLTE : (m : Nat) -> (n : Nat) -> Either (LTE m n) (LTE n m)
-> totalLTE  Z    n     = Left LTEZero
-> totalLTE (S m) Z     = Right LTEZero
-> totalLTE (S m) (S n) with (totalLTE m n)
->   | (Left  p) = Left  (LTESucc p)
->   | (Right p) = Right (LTESucc p)
+-- ||| LTE is decidable
+decLTE : (m : Nat) -> (n : Nat) -> Dec (LTE m n)
+decLTE = Idris.Decidable.Order.lte
+
+-- ||| LT is decidable
+decLT : (m : Nat) -> (n : Nat) -> Dec (LT m n)
+decLT m n = decLTE (S m) n
+
+{- TODO
 
 
 
-> preorderNatLTE : Preorder Nat
-> preorderNatLTE =
->   MkPreorder LTE reflexiveLTE transitiveLTE
-
-
-> totalPreorderNatLTE : TotalPreorder Nat
-> totalPreorderNatLTE =
->   MkTotalPreorder LTE reflexiveLTE transitiveLTE totalLTE
-
-
-Decidability
-
-> ||| LTE is decidable
-> decLTE : (m : Nat) -> (n : Nat) -> Dec (LTE m n)
-> decLTE = lte
-
-
-> ||| LT is decidable
-> decLT : (m : Nat) -> (n : Nat) -> Dec (LT m n)
-> decLT m n = decLTE (S m) n
 
 
 Uniqueness

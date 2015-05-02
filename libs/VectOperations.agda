@@ -35,8 +35,8 @@ filter : {A : Type} ->
 filter d1P [] = MkSigma Z []
 filter d1P (a :: as) with (filter d1P as)
 ... | MkSigma m as' with (d1P a)
-...  | Yes prf   = MkSigma (S m) (a :: as')
-...  | No contra = MkSigma    m        as'
+...   | Yes prf   = MkSigma (S m) (a :: as')
+...   | No contra = MkSigma    m        as'
 
 
 -- ||| Filters a vector on a decidable property and pairs elements with proofs
@@ -49,8 +49,8 @@ filterTag : {A : Type} ->
 filterTag d1P [] = MkSigma Z []
 filterTag d1P (a :: as) with (filterTag d1P as)
 ... | MkSigma _ tail with (d1P a)
-... | (Yes p)     = MkSigma _ (MkSigma a p :: tail)
-... | (No contra) = MkSigma _ tail
+...   | (Yes p)     = MkSigma _ (MkSigma a p :: tail)
+...   | (No contra) = MkSigma _ tail
 
 
 
@@ -64,76 +64,3 @@ argmaxMax {n = S (S m)} tp (a' :: (a'' :: as)) _ with (TotalPreorder.totalPre tp
 ... | Right x  = (FZ , a')
 ... | Left  x with (argmaxMax tp (a'' :: as) (ltZS m))
 ...   | (k , max) = (FS k , max)
-
-{-
-argmaxMax {n = S (S m)} tp (a' :: (a'' :: as)) _ with (argmaxMax tp (a'' :: as) (ltZS m))
-... | (k , max) with (TotalPreorder.totalPre tp a' max)
-...         | Left  x  = (FS k , max)
-...         | Right x  = (FZ , a')
--}
-
-{-
-argmax : {A : Type} -> {n : Nat} ->
-         TotalPreorder A -> Vect n A -> LT Z n -> Fin n
-argmax tp as p = fst (argmaxMax tp as p)
--}
-{-
-max : {A : Type} -> {n : Nat} ->
-      TotalPreorder A -> Vect n A -> LT Z n -> A
-max tp as p = snd (argmaxMax tp as p)
--}
-{- TODO
-
-
-> {-
-
-> |||
-> argmaxMax : {A : Type} -> {TO : A -> A -> Type} -> Preordered A TO =>
->             Vect (S n) A -> (Fin (S n), A)
-> argmaxMax     {n = Z}   (a :: Nil) = (FZ, a)
-> argmaxMax {A} {n = S m} (a :: (a' :: as)) with (preorder a (snd (argmaxMax (a' :: as))))
->   | (Left  _) = (FS (fst ka), snd ka) where
->     ka : (Fin (S m), A)
->     ka = argmaxMax (a' :: as)
->   | (Right _) = (FZ, a)
-
-
-> |||
-> argmax : {A : Type} -> {TO : A -> A -> Type} -> Preordered A TO =>
->          Vect (S n) A -> Fin (S n)
-> argmax = fst . argmaxMax
-
-
-> |||
-> max : {A : Type} -> {TO : A -> A -> Type} -> Preordered A TO =>
->       Vect (S n) A -> A
-> max = snd . argmaxMax
-
-> -}
-
-
-> {-
-
-> |||
-> argmaxMax : {A, F : Type} -> {TO : F -> F -> Type} -> Ordered F TO =>
->             Vect (S n) (A,F) -> (A,F)
-> argmaxMax {n = Z}   (af :: Nil) = af
-> argmaxMax {n = S m} (af :: (af' :: afs)) with (order (snd af) (snd (argmaxMax (af' :: afs))))
->   | (Left  _) = argmaxMax (af' :: afs)
->   | (Right _) = af
-
-
-> |||
-> argmax : {A, F : Type} -> {TO : F -> F -> Type} -> Ordered F TO =>
->          Vect (S n) (A,F) -> A
-> argmax = fst . argmaxMax
-
-
-> |||
-> max : {A, F : Type} -> {TO : F -> F -> Type} -> Ordered F TO =>
->       Vect (S n) (A,F) -> F
-> max = snd . argmaxMax
-
-> ---}
-
--}

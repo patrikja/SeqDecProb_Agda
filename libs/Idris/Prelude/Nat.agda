@@ -402,6 +402,14 @@ succInjective : (left : Nat) -> (right : Nat) -> (p : S left == S right) ->
   left == right
 succInjective left .left Refl = Refl
 
+decEqNat : (m n : Nat) -> Dec (m == n)
+decEqNat Z     Z     = Yes Refl
+decEqNat Z     (S n) = No (λ ())
+decEqNat (S m) Z     = No (λ ())
+decEqNat (S m) (S n) with decEqNat m n
+decEqNat (S m) (S .m) | Yes Refl  = Yes Refl
+...                   | No contra = No (contra ∘ succInjective m n)
+
 -- Plus
 plusZeroLeftNeutral : (right : Nat) -> (0 + right) == right
 plusZeroLeftNeutral right = Refl

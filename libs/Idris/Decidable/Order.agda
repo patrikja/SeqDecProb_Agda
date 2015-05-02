@@ -1,6 +1,7 @@
 module Idris.Decidable.Order where
-
-import Idris.Decidable.Decidable
+open import Idris.Prelude.Nat
+open import Idris.Prelude.Basics -- Dec
+open import Idris.Decidable.Decidable
 -- import Decidable.Equality
 -- import Data.Fin
 -- import Data.Fun
@@ -96,24 +97,32 @@ zeroAlwaysSmaller = LTEZero
 total ltesuccinjective : {n : Nat} -> {m : Nat} -> (LTE n m -> Void) -> LTE (S n) (S m) -> Void
 ltesuccinjective {n} {m} disprf (LTESucc nLTEm) = void (disprf nLTEm)
 ltesuccinjective {n} {m} disprf LTEZero         impossible
+-}
 
-
-total decideLTE : (n : Nat) -> (m : Nat) -> Dec (LTE n m)
+decideLTE : (n : Nat) -> (m : Nat) -> Dec (LTE n m)
 decideLTE    Z      y  = Yes LTEZero
-decideLTE (S x)     Z  = No  zeroNeverGreater
-decideLTE (S x)   (S y) with (decEq (S x) (S y))
+decideLTE (S x)     Z  = No  (λ ())
+decideLTE (S x)   (S y) with (decEqNat (S x) (S y))
+decideLTE (S x) (S .x) | Yes Refl = {!!}
+decideLTE (S x) (S y)  | No contra = {!!}
+
+{-
   | Yes eq      = rewrite eq in Yes (reflexive (S y))
   | No _ with (decideLTE x y)
     | Yes nLTEm = Yes (LTESucc nLTEm)
     | No  nGTm  = No (ltesuccinjective nGTm)
+-}
 
+{- TODO
 instance Decidable [Nat,Nat] LTE where
   decide = decideLTE
+-}
 
-total
-lte : (m : Nat) -> (n : Nat) -> Dec (LTE m n)
-lte m n = decide {ts = [Nat,Nat]} {p = LTE} m n
 
+-- lte : (m : Nat) -> (n : Nat) -> Dec (LTE m n)
+-- lte = decideLTE
+
+{-
 total
 shift : (m : Nat) -> (n : Nat) -> LTE m n -> LTE (S m) (S n)
 shift m n mLTEn = LTESucc mLTEn
