@@ -94,30 +94,22 @@ zeroNeverGreater {n} (LTESucc _) impossible
 total zeroAlwaysSmaller : {n : Nat} -> LTE Z n
 zeroAlwaysSmaller = LTEZero
 
-total ltesuccinjective : {n : Nat} -> {m : Nat} -> (LTE n m -> Void) -> LTE (S n) (S m) -> Void
-ltesuccinjective {n} {m} disprf (LTESucc nLTEm) = void (disprf nLTEm)
-ltesuccinjective {n} {m} disprf LTEZero         impossible
 -}
+ltesuccinjective : {n : Nat} -> {m : Nat} -> (LTE n m -> Void) -> LTE (S n) (S m) -> Void
+ltesuccinjective {n} {m} disprf (LTESucc nLTEm) = void (disprf nLTEm)
+
 
 decideLTE : (n : Nat) -> (m : Nat) -> Dec (LTE n m)
 decideLTE    Z      y  = Yes LTEZero
 decideLTE (S x)     Z  = No  (λ ())
-decideLTE (S x)   (S y) with (decEqNat (S x) (S y))
-decideLTE (S x) (S .x) | Yes Refl = {!!}
-decideLTE (S x) (S y)  | No contra = {!!}
-
-{-
-  | Yes eq      = rewrite eq in Yes (reflexive (S y))
-  | No _ with (decideLTE x y)
-    | Yes nLTEm = Yes (LTESucc nLTEm)
-    | No  nGTm  = No (ltesuccinjective nGTm)
--}
+decideLTE (S x)   (S y) with decideLTE x y
+...  | Yes prf   = Yes (LTESucc prf)
+...  | No contra = No (ltesuccinjective contra)
 
 {- TODO
 instance Decidable [Nat,Nat] LTE where
   decide = decideLTE
 -}
-
 
 -- lte : (m : Nat) -> (n : Nat) -> Dec (LTE m n)
 -- lte = decideLTE

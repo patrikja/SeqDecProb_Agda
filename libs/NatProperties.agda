@@ -132,29 +132,19 @@ totalPreorderNatLTE =
 
 -- ||| LTE is decidable
 decLTE : (m : Nat) -> (n : Nat) -> Dec (LTE m n)
-decLTE = Idris.Decidable.Order.lte
+decLTE = Idris.Decidable.Order.decideLTE
 
 -- ||| LT is decidable
 decLT : (m : Nat) -> (n : Nat) -> Dec (LT m n)
 decLT m n = decLTE (S m) n
 
-{- TODO
+-- Uniqueness
 
+-- ||| LTE is unique
+uniqueLTE : {m n : Nat} -> (p1 : LTE m n) -> (p2 : LTE m n) -> (p1 == p2)
+uniqueLTE  LTEZero     LTEZero    = Refl
+uniqueLTE (LTESucc p) (LTESucc q) = cong (uniqueLTE p q)
 
-
-
-
-Uniqueness
-
-> ||| LTE is unique
-> uniqueLTE : (p1 : LTE m n) -> (p2 : LTE m n) -> p1 == p2
-> uniqueLTE  LTEZero     LTEZero    = Refl
-> uniqueLTE  LTEZero    (LTESucc p) impossible
-> uniqueLTE (LTESucc p)  LTEZero    impossible
-> uniqueLTE (LTESucc p) (LTESucc q) = cong (uniqueLTE p q)
-
-> ||| LT is unique
-> uniqueLT : (p1 : LT m n) -> (p2 : LT m n) -> p1 == p2
-> uniqueLT {m} {n} = uniqueLTE {m = S m} {n = n}
-
--}
+-- ||| LT is unique
+uniqueLT : {m n : Nat} -> (p1 : LT m n) -> (p2 : LT m n) -> (p1 == p2)
+uniqueLT {m} {n} = uniqueLTE {m = S m} {n = n}
