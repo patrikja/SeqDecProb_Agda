@@ -8,6 +8,7 @@ open import Idris.Prelude.Bool
 -- import Idris.Prelude.Cast
 -- import Idris.Prelude.Classes
 -- import Idris.Prelude.Uninhabited
+open import Idris.Syntax.PreorderReasoning
 
 -- %access public
 -- %default total
@@ -427,15 +428,31 @@ plusSuccRightSucc (S left) right =
   let inductiveHypothesis = plusSuccRightSucc left right in
     cong {f = S} inductiveHypothesis
 
-{- TODO continue
 
 plusCommutative : (left : Nat) -> (right : Nat) ->
   (left + right) == (right + left)
-plusCommutative Z        right = {! ?plusCommutativeBaseCase !}
-plusCommutative (S left) right =
-  let inductiveHypothesis = plusCommutative left right in
-    {! ?plusCommutativeStepCase !}
+plusCommutative Z        Z         = Refl
+plusCommutative Z        (S right) = trans (     plusZeroLeftNeutral  (S right))
+                                           (sym (plusZeroRightNeutral (S right)))
+plusCommutative (S left) Z         = plusZeroRightNeutral (S left)
+plusCommutative (S left) (S right) = S (left + S right) ==< {!!} >==
+                                     S (S (right + left)) ==< {! !} >== -- TODO
+                                     {! S (S (left + right))!}   -- S (S (left + right))
 
+{-
+(S (left + S right))    ==< ? >==
+                                     (S (S (right + left)))  ==< ? >==
+                                     (S (S (left + right)))  QED
+-}
+
+  -- cong {f = S} (plusCommutative left (S right))
+
+-- Goal: S (left + S right) == S (right + S left)
+--                             S (S (left + right))
+--  let inductiveHypothesis = plusCommutative left right in
+--    {! ?plusCommutativeStepCase !}
+
+{- TODO continue
 plusAssociative : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
   left + (centre + right) == (left + centre) + right
 plusAssociative Z        centre right = Refl
