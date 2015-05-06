@@ -232,15 +232,6 @@ replicate (S n) x = x :: replicate n x
 --------------------------------------------------------------------------------
 -- Instances
 --------------------------------------------------------------------------------
-EqDict' : Type -> Type
-EqDict' a = a -> a -> Bool
-
-record EqDict (a : Type) : Type where
-  field
-    _===_ : EqDict' a
-  _/=_ : EqDict' a
-  x /= y = not (x === y)
-
 eqList : {a : Type} -> EqDict a -> EqDict' (List a)
 eqList eqa []        []        = True
 eqList eqa []        (x :: ys) = False

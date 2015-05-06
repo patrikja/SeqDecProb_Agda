@@ -6,7 +6,8 @@ open import Idris.Builtins
 open import Idris.Prelude.Basics
 open import Idris.Prelude.Bool
 -- import Idris.Prelude.Cast
--- import Idris.Prelude.Classes
+import Idris.Prelude.Classes
+open   Idris.Prelude.Classes using (EqDict)
 -- import Idris.Prelude.Uninhabited
 open import Idris.Syntax.PreorderReasoning
 
@@ -187,6 +188,13 @@ toIntNat n = toIntNat' n 0 where
 --------------------------------------------------------------------------------
 -- Type class instances
 --------------------------------------------------------------------------------
+eqNat = record { _===_ = _===_} where
+  _===_ : Nat -> Nat -> Bool
+  Z === Z         = True
+  (S l) === (S r) = l === r
+  _ === _         = False
+
+
 {- TODO
 instance Eq Nat where
   Z == Z         = True
@@ -435,42 +443,32 @@ plusCommutative Z        Z         = Refl
 plusCommutative Z        (S right) = trans (     plusZeroLeftNeutral  (S right))
                                            (sym (plusZeroRightNeutral (S right)))
 plusCommutative (S left) Z         = plusZeroRightNeutral (S left)
-plusCommutative (S left) (S right) = S (left + S right) ==< {!!} >==
-                                     S (S (right + left)) ==< {! !} >== -- TODO
-                                     {! S (S (left + right))!}   -- S (S (left + right))
+plusCommutative (S left) (S right) = cong {f = S}
+                                       (left + S right    ==< plusCommutative left (S right) >==
+                                        S (right + left)  ==< plusSuccRightSucc right left   >==
+                                        right + S left    QED)
 
-{-
-(S (left + S right))    ==< ? >==
-                                     (S (S (right + left)))  ==< ? >==
-                                     (S (S (left + right)))  QED
--}
 
-  -- cong {f = S} (plusCommutative left (S right))
-
--- Goal: S (left + S right) == S (right + S left)
---                             S (S (left + right))
---  let inductiveHypothesis = plusCommutative left right in
---    {! ?plusCommutativeStepCase !}
-
-{- TODO continue
 plusAssociative : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left + (centre + right) == (left + centre) + right
+  (left + (centre + right)) == ((left + centre) + right)
 plusAssociative Z        centre right = Refl
-plusAssociative (S left) centre right =
-  let inductiveHypothesis = plusAssociative left centre right in
-    {! ?plusAssociativeStepCase !}
+plusAssociative (S left) centre right = cong {f = S} inductiveHypothesis
+  where inductiveHypothesis = plusAssociative left centre right
+
 
 plusConstantRight : (left : Nat) -> (right : Nat) -> (c : Nat) ->
-  (p : left == right) -> left + c == right + c
-plusConstantRight left _ c Refl = Refl
+  (p : left == right) -> (left + c) == (right + c)
+plusConstantRight left .left c Refl = Refl
 
 plusConstantLeft : (left : Nat) -> (right : Nat) -> (c : Nat) ->
-  (p : left == right) -> c + left == c + right
-plusConstantLeft left _ c Refl = Refl
+  (p : left == right) -> (c + left) == (c + right)
+plusConstantLeft left .left c Refl = Refl
 
-plusOneSucc : (right : Nat) -> 1 + right == S right
+
+plusOneSucc : (right : Nat) -> (1 + right) == S right
 plusOneSucc n = Refl
 
+{- TODO continue
 plusLeftCancel : (left : Nat) -> (right : Nat) -> (right' : Nat) ->
   (p : left + right == left + right') -> right == right'
 plusLeftCancel Z        right right' p = {! ?plusLeftCancelBaseCase !}

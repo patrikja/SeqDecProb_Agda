@@ -22,6 +22,18 @@ boolOp : (a -> a -> Int) -> a -> a -> Bool
 boolOp op x y = intToBool (op x y)
 
 -- ---------------------------------------------------------- [ Equality Class ]
+-}
+EqDict' : Type -> Type
+EqDict' a = a -> a -> Bool
+
+record EqDict (a : Type) : Type where
+  field
+    _===_ : EqDict' a
+  _/=_ : EqDict' a
+  x /= y = not (x === y)
+
+
+{-
 ||| The Eq class defines inequality and equality.
 class Eq a where
     (==) : a -> a -> Bool
