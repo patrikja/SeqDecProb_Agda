@@ -164,36 +164,37 @@ Last             X                 X
     Any : {A : Set} (P : A -> Set) -> List A -> Set
     Any {A} P (n , v) = Σ (Fin n) (\i -> P (lookup i v))
 
-    NonEmpty : Set -> Set
-    NonEmpty A = Σ Nat (\n -> Vec A (S n))
+    NonEmptyList : Set -> Set
+    NonEmptyList A = Σ Nat (\n -> Vec A (S n))
 
-    mapNonEmpty : {A B : Set} -> (A -> B) -> NonEmpty A -> NonEmpty B
-    mapNonEmpty f (m , v) = (m , Data.Vec.map f v)
+    mapNonEmptyList : {A B : Set} -> (A -> B) -> NonEmptyList A -> NonEmptyList B
+    mapNonEmptyList f (m , v) = (m , Data.Vec.map f v)
 
-    AnyN : {A : Set} -> (P : A -> Set) -> NonEmpty A -> Set
+    AnyN : {A : Set} -> (P : A -> Set) -> NonEmptyList A -> Set
     AnyN P (n , v) = Σ (Fin (S n)) (\i -> P (lookup i v))
 
     filterTagP : {A : Set} ->
                  (p  : A -> Set) ->
-                 (as : NonEmpty A) ->
+                 (as : NonEmptyList A) ->
                  AnyN p as ->
-                 NonEmpty (Σ A p)
+                 NonEmptyList (Σ A p)
     filterTagP p (.0 , x ∷ []) (fZ , pHolds) = (0 , ((x , pHolds) ∷ []))
     filterTagP p (.0 , x ∷ []) (fS () , q)   -- cannot happen
-    filterTagP p (S n , x ∷ xs) (fZ   , q) = (Z , (x , q) ∷ [])
+    filterTagP p (S n , x ∷ xs) (fZ   , q) = ({!!} , (x , q) ∷ {!!})
     filterTagP p (S n , x ∷ xs) (fS i , q) = ({!!} , {!!} ∷ {!!})
 
+    -- TODO: this does not look right: too many "believe_me"!
 {-
-    filterTagP p (a :: (a' :: as)) q =
+    filterTagP p (a :: as) q =
       if (p a)
       then (_ ** ((a ** believe_me (p a))
                   ::
                   map
                   (\ a'' => (a'' ** believe_me (p a'')))
-                  (getProof (filter p (a' :: as)))
+                  (getProof (filter p as))
                  )
            )
-      else filterTagP p (a' :: as) (believe_me oh)
+      else filterTagP p as (believe_me oh)
 -}
   open Utils
 
@@ -245,7 +246,7 @@ isAnyBy (viable n) (succs x)
   allCommands : Vec Action 3
   allCommands = Left ∷ Right ∷ Ahead ∷ []
 
-  allCommandsNE : NonEmpty Action
+  allCommandsNE : NonEmptyList Action
   allCommandsNE = ( 2 ,  allCommands)
 
   findAllCommands : (a : Action) -> Σ (Fin 3) (\i -> a ≡ lookup i allCommands)
@@ -257,7 +258,7 @@ isAnyBy (viable n) (succs x)
                  (n : Nat) ->
                  (x : X t) ->
                  (v : viable {t} (S n) x) ->
-                 NonEmpty (Y t x)
+                 NonEmptyList (Y t x)
   admissiblesP {t} n x v = filterTagP (admissible x) allCommandsNE oneIsAdmissible
     where  isFeasible : viableStepex1 {t} n x -- Σ (Y t x) (\y -> viable n (step t x y))
            isFeasible = viableSpec1ex1 {t} x v
@@ -277,15 +278,15 @@ isAnyBy (viable n) (succs x)
           (x : X t) ->
           (v : viable {t} (S n) x) -> -- Ensures that the result vector is non-empty
           (f :      viableStepex1 {t} n x  -> Nat) ->
-          NonEmpty (viableStepex1 {t} n x  ×  Nat)
-  yfysP {t} n x v f = mapNonEmpty (pairId f) ysP
-    where ys : NonEmpty (Y t x)
+          NonEmptyList (viableStepex1 {t} n x  ×  Nat)
+  yfysP {t} n x v f = mapNonEmptyList (pairId f) ysP
+    where ys : NonEmptyList (Y t x)
           ys = {!admissiblesP x v!}
           p : Y t x -> Set
           p y = viable {S t} n (step t x y)
           s4 : {!!}
           s4 = {!!}
-          ysP : NonEmpty (Σ (Y t x) p)
+          ysP : NonEmptyList (Σ (Y t x) p)
                      -- (viableStepex1 {t} n x)
           ysP = filterTagP p ys s4
 {--}
