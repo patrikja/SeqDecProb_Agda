@@ -41,10 +41,15 @@ class Eq a where
 
     x /= y = not (x == y)
     x == y = not (x /= y)
+-}
 
-instance Eq () where
-  () == () = True
+eqUnit : EqDict' Unit
+eqUnit unit unit = True
 
+eqDict : EqDict Unit
+eqDict = record { _===_ = eqUnit }
+
+{- TODO
 instance Eq Int where
     (==) = boolOp prim__eqInt
 
@@ -59,17 +64,24 @@ instance Eq Char where
 
 instance Eq String where
     (==) = boolOp prim__eqString
-
-instance Eq Bool where
-    True  == True  = True
-    True  == False = False
-    False == True  = False
-    False == False = True
-
-instance (Eq a, Eq b) => Eq (a, b) where
-  (==) (a, c) (b, d) = (a == b) && (c == d)
-
 -}
+
+-- instance Eq Bool where
+eqBool : EqDict' Bool
+eqBool True  True  = True
+eqBool True  False = False
+eqBool False True  = False
+eqBool False False = True
+
+eqDictBool = record { _===_ = eqBool }
+
+-- instance (Eq a, Eq b) => Eq (a, b) where
+eqPair : {a : Type} -> {b : Type} ->
+         EqDict' a -> EqDict' b -> EqDict' (a × b)
+eqPair _==a_ _==b_
+       (a , b) (a' , b') = (a ==a a') && (b ==b b')
+
+
 
 -- ---------------------------------------------------------- [ Ordering Class ]
 
