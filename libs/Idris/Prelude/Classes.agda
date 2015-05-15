@@ -46,8 +46,8 @@ class Eq a where
 eqUnit : EqDict' Unit
 eqUnit unit unit = True
 
-eqDict : EqDict Unit
-eqDict = record { _===_ = eqUnit }
+eqDictUnit : EqDict Unit
+eqDictUnit = record { _===_ = eqUnit }
 
 {- TODO
 instance Eq Int where
