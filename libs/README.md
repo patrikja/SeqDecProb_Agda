@@ -14,6 +14,7 @@ Idris instead of doing this by hand.
 following [License](Idris/LICENSE).)
 
 Some differences:
+
 | Idris | Agda | Comment |
 | ----- | ---- | ------- |
 | \ =>  | \ -> |         |
@@ -24,3 +25,106 @@ Some differences:
 | (a, b) | (a , b) | The pair constructor _,_ in Agda needs space before on both sides |
 | (a : A ** B) | Sigma A (\a -> B) | No built-in syntactic sugar for the dependent sum type in Agda. |
 | (a ** b) | MkSigma a b | No built-in syntactic sugar for dependent sum values in Agda. |
+
+----------------------------------------------------------------
+
+# Matching Idris and Agda files
+
+``` Shell
+find . -name '*.agda'
+find . -name '*.lidr'
+```
+
+* Agda files here: https://github.com/patrikja/SeqDecProb_Agda/tree/master/libs
+* Idris files here: https://github.com/nicolabotta/SeqDecProbs/tree/master/frameworks/14-
+
+| Agda                                           | Idris |
+| ----------                                     | ----- |
+| ./Decidable.agda                               | ./Decidable.lidr |
+| ./NatProperties.agda                           | ./NatProperties.lidr |
+| ./Preorder.agda                                | ./Preorder.lidr |
+| ./Pro.agda                                     | ./Prop.lidr |
+| ./SigmaProperties.agda                         | ./SigmaProperties.lidr |
+| ./TotalPreorder.agda                           | ./TotalPreorder.lidr |
+| ./Util.agda                                    | ./Util.lidr |
+| ./VectOperations.agda                          | ./VectOperations.lidr |
+| ./VectProperties.agda                          | ./VectProperties.lidr |
+
+Idris "standard library" files here: https://github.com/idris-lang/Idris-dev/tree/master/libs
+
+| Agda                                           | Idris |
+| -----                                          | ----- |
+| ./Idris/Decidable/Decidable.agda               | contrib/Decidable/Decidable.idr |
+| ./Idris/Decidable/Order.agda                   | contrib/Decidable/Order.idr |
+| ./Idris/Builtins.agda                          | prelude/Builtins.idr |
+| ./Idris/Prelude/Nat.agda                       | prelude/Prelude/Nat.idr                     |
+| ./Idris/Prelude/Bool.agda                      | prelude/Prelude/Bool.idr                    |
+| ./Idris/Prelude/Either.agda                    | prelude/Prelude/Either.idr                  |
+| ./Idris/Prelude/Maybe.agda                     | prelude/Prelude/Maybe.idr                   |
+| ./Idris/Prelude/List.agda                      | prelude/Prelude/List.idr                    |
+| ./Idris/Prelude/Classes.agda                   | prelude/Prelude/Classes.idr                 |
+| ./Idris/Prelude/Basics.agda                    | prelude/Prelude/Basics.idr                  |
+| ./Idris/Prelude/Pairs.agda                     | prelude/Prelude/Pairs.idr                   |
+| ./Idris/Syntax/PreorderReasoning.agda          | base/Syntax/PreorderReasoning.idr |
+| ./Idris/Data/Vect.agda                         | base/Data/Vect.idr |
+| ./Idris/Data/VectType.agda                     | base/Data/VectType.idr |
+| ./Idris/Data/Fin.agda                          | base/Data/Fin.idr |
+| ./Idris/Data/Vect/Quantifiers.agda             | base/Data/Vect/Quantifiers.idr |
+| ./Idris/Control/Isomorphism.agda               | base/Control/Isomorphism.idr |
+
+
+## Not yet ported
+
+./Basics.lidr
+./BoundedNat.lidr
+./BoundedNatOperations.lidr
+./BoundedNatProperties.lidr
+./ClassContainerMonad.lidr
+./ContainerMonad.lidr
+./DecidableProperties.lidr
+./EffectException.lidr
+./EffectStdIO.lidr
+./EmbProj.lidr
+./EqualityProperties.lidr
+./FinOperations.lidr
+./FinProperties.lidr
+./Finite.lidr
+./FiniteOperations.lidr
+./FiniteProperties.lidr
+./FiniteSubType.lidr
+./FiniteSubTypeOperations.lidr
+./FiniteSubTypeProperties.lidr
+./FunOperations.lidr
+./FunProperties.lidr
+./IdentityOperations.lidr
+./IdentityProperties.lidr
+./IsomorphismOperations.lidr
+./IsomorphismProperties.lidr
+./LambdaPostulates.lidr
+./Opt.lidr
+./Order.lidr
+./OrderOperations.lidr
+./OrderProperties.lidr
+./PreorderOperations.lidr
+./RelFloat.lidr
+./RelFloatPostulates.lidr
+./RelFloatProperties.lidr
+./RelSyntax.lidr
+./SeqDecProbMonadic.lidr
+./SeqDecProbMonadicExample2.lidr
+./SeqDecProbMonadicSmallTheory.lidr
+./SeqDecProbMonadicSmallTheoryExample2.lidr
+./SeqDecProbMonadicTheory.lidr
+./SeqDecProbMonadicTheoryExample2.1.lidr
+./SeqDecProbMonadicTheoryExample2.lidr
+./SigmaOperations.lidr
+./SingletonProperties.lidr
+./SoProperties.lidr
+./SubType.lidr
+./SubsetOperations.lidr
+./SubsetProperties.lidr
+./TotalPreorderOperations.lidr
+./Unique.lidr
+./UniqueProperties.lidr
+./funprogintro.lidr
+./tagging.lidr
