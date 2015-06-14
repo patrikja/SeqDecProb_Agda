@@ -476,10 +476,12 @@ plusLeftCancel (S left) right right' p = plusLeftCancel left right right'
 
 plusRightCancel : (left : Nat) -> (left' : Nat) -> (right : Nat) ->
   (p : (left + right) == (left' + right))  ->  (left == left')
-plusRightCancel left left' Z         p = ? -- trans (sym (plusZeroRightNeutral {!left!})) (plusZeroRightNeutral {!left'!})
-plusRightCancel left left' (S right) p =
-  let inductiveHypothesis = plusRightCancel left left' right in
-    {! ?plusRightCancelStepCase !}
+plusRightCancel left left' right p = plusLeftCancel right left left'
+                                       (  right + left   ==< plusCommutative right left >==
+                                          left  + right  ==< p >==
+                                          left' + right  ==< plusCommutative left' right >==
+                                          right + left'  QED
+                                       )
 
 {- TODO continue
 plusLeftLeftRightZero : (left : Nat) -> (right : Nat) ->
