@@ -468,21 +468,20 @@ plusConstantLeft left .left c Refl = Refl
 plusOneSucc : (right : Nat) -> (1 + right) == S right
 plusOneSucc n = Refl
 
-{- TODO continue
 plusLeftCancel : (left : Nat) -> (right : Nat) -> (right' : Nat) ->
-  (p : left + right == left + right') -> right == right'
-plusLeftCancel Z        right right' p = {! ?plusLeftCancelBaseCase !}
-plusLeftCancel (S left) right right' p =
-  let inductiveHypothesis = plusLeftCancel left right right' in
-    {! ?plusLeftCancelStepCase !}
+  (p : (left + right) == (left + right'))  ->  (right == right')
+plusLeftCancel Z        right right' p = p
+plusLeftCancel (S left) right right' p = plusLeftCancel left right right'
+                                           (succInjective (left + right) (left + right') p)
 
 plusRightCancel : (left : Nat) -> (left' : Nat) -> (right : Nat) ->
-  (p : left + right == left' + right) -> left == left'
-plusRightCancel left left' Z         p = {! ?plusRightCancelBaseCase !}
+  (p : (left + right) == (left' + right))  ->  (left == left')
+plusRightCancel left left' Z         p = ? -- trans (sym (plusZeroRightNeutral {!left!})) (plusZeroRightNeutral {!left'!})
 plusRightCancel left left' (S right) p =
   let inductiveHypothesis = plusRightCancel left left' right in
     {! ?plusRightCancelStepCase !}
 
+{- TODO continue
 plusLeftLeftRightZero : (left : Nat) -> (right : Nat) ->
   (p : left + right == left) -> right == Z
 plusLeftLeftRightZero Z        right p = {! ?plusLeftLeftRightZeroBaseCase !}

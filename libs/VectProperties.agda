@@ -206,16 +206,16 @@ module MaxAndArgmax {A : Type} (tp : TotalPreorder A) where
   upperBoundCons : {n : Nat} ->
                    (a a' : A) -> (as : Vect n A) -> (mx : A) ->
                    (a <= mx) ->
-                   Elem mx         (a' :: as) ->
-                   upperBound (     a' :: as) mx ->
-                   upperBound (a :: a' :: as) mx
+                   Elem mx          (a' :: as) ->
+                   upperBound (      a' :: as)   mx ->
+                   upperBound (a :: (a' :: as))  mx
   upperBoundCons a a' as mx a<=mx el upbTail .a Here     = a<=mx
   upperBoundCons a a' as mx a<=mx el upbTail b (There p) = upbTail b p
 
   upperBoundCons2 : {n : Nat} ->
                     (mx a' : A) -> (as : Vect n A) ->
-                    upperBound (      a' :: as) mx ->
-                    upperBound (mx :: a' :: as) mx
+                    upperBound (       a' :: as)   mx ->
+                    upperBound (mx :: (a' :: as))  mx
   upperBoundCons2 mx a' as upbTail .mx Here       = reflexive mx
   upperBoundCons2 mx a' as upbTail b (There elb)  = upbTail b elb
 
@@ -225,7 +225,7 @@ module MaxAndArgmax {A : Type} (tp : TotalPreorder A) where
                          (index i as == max) × (upperBound as max)))
   allAboutMax [] ()
   allAboutMax (mx :: [])      p = MkSigma FZ (MkSigma mx (Refl , upperBoundSing mx))
-  allAboutMax {n = S (S m)} (a :: a' :: as) p with allAboutMax (a' :: as) (LTESucc LTEZero)
+  allAboutMax {n = S (S m)} (a :: (a' :: as)) p with allAboutMax (a' :: as) (LTESucc LTEZero)
   ... | MkSigma i' (MkSigma mx' (ind , upb)) with totalPre a mx'
   ...   | Left  q = MkSigma (FS i') (MkSigma mx' (ind  , upperBoundCons a a' as mx' q
                                                            (ind2Elem mx' (a' :: as) i' ind) upb))

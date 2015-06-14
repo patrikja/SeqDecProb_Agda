@@ -54,8 +54,6 @@ Idris "standard library" files here: https://github.com/idris-lang/Idris-dev/tre
 
 | Agda                                           | Idris |
 | -----                                          | ----- |
-| ./Idris/Decidable/Decidable.agda               | contrib/Decidable/Decidable.idr |
-| ./Idris/Decidable/Order.agda                   | contrib/Decidable/Order.idr |
 | ./Idris/Builtins.agda                          | prelude/Builtins.idr |
 | ./Idris/Prelude/Nat.agda                       | prelude/Prelude/Nat.idr                     |
 | ./Idris/Prelude/Bool.agda                      | prelude/Prelude/Bool.idr                    |
@@ -65,12 +63,14 @@ Idris "standard library" files here: https://github.com/idris-lang/Idris-dev/tre
 | ./Idris/Prelude/Classes.agda                   | prelude/Prelude/Classes.idr                 |
 | ./Idris/Prelude/Basics.agda                    | prelude/Prelude/Basics.idr                  |
 | ./Idris/Prelude/Pairs.agda                     | prelude/Prelude/Pairs.idr                   |
-| ./Idris/Syntax/PreorderReasoning.agda          | base/Syntax/PreorderReasoning.idr |
 | ./Idris/Data/Vect.agda                         | base/Data/Vect.idr |
 | ./Idris/Data/VectType.agda                     | base/Data/VectType.idr |
 | ./Idris/Data/Fin.agda                          | base/Data/Fin.idr |
 | ./Idris/Data/Vect/Quantifiers.agda             | base/Data/Vect/Quantifiers.idr |
 | ./Idris/Control/Isomorphism.agda               | base/Control/Isomorphism.idr |
+| ./Idris/Syntax/PreorderReasoning.agda          | base/Syntax/PreorderReasoning.idr |
+| ./Idris/Decidable/Decidable.agda               | contrib/Decidable/Decidable.idr |
+| ./Idris/Decidable/Order.agda                   | contrib/Decidable/Order.idr |
 
 
 ## Not yet ported
