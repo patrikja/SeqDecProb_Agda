@@ -483,35 +483,43 @@ plusRightCancel left left' right p = plusLeftCancel right left left'
                                           right + left'  QED
                                        )
 
-{- TODO continue
 plusLeftLeftRightZero : (left : Nat) -> (right : Nat) ->
-  (p : left + right == left) -> right == Z
-plusLeftLeftRightZero Z        right p = {! ?plusLeftLeftRightZeroBaseCase !}
+  (p : (left + right) == left)  ->  (right == Z)
+plusLeftLeftRightZero Z        right p = p
 plusLeftLeftRightZero (S left) right p =
   let inductiveHypothesis = plusLeftLeftRightZero left right in
-    {! ?plusLeftLeftRightZeroStepCase !}
+    inductiveHypothesis (succInjective (plus left right) left p)
 
 -- Mult
-multZeroLeftZero : (right : Nat) -> Z * right == Z
+multZeroLeftZero : (right : Nat) -> (Z * right) == Z
 multZeroLeftZero right = Refl
 
-multZeroRightZero : (left : Nat) -> left * Z == Z
+multZeroRightZero : (left : Nat) -> (left * Z) == Z
 multZeroRightZero Z        = Refl
 multZeroRightZero (S left) =
   let inductiveHypothesis = multZeroRightZero left in
-    {! ?multZeroRightZeroStepCase !}
+     inductiveHypothesis
 
 multRightSuccPlus : (left : Nat) -> (right : Nat) ->
-  left * (S right) == left + (left * right)
+  (left * (S right)) == (left + (left * right))
 multRightSuccPlus Z        right = Refl
 multRightSuccPlus (S left) right =
   let inductiveHypothesis = multRightSuccPlus left right in
-    {! ?multRightSuccPlusStepCase !}
+     (S left * S right)                ==< Refl >==
+     (S right) + (left * S right)      ==< cong {f = (_+_) (S right)} inductiveHypothesis >==
+     (S right) + (left + left * right) ==< Refl >==
+     S (right + (left + left * right)) ==< cong {f = S} (plusAssociative right left (left * right)) >==
+     S ((right + left) + left * right) ==< cong {f = \x -> S (x + left * right)} (plusCommutative right left) >==
+     S ((left + right) + left * right) ==< cong {f = S} (sym (plusAssociative left right (left * right))) >==
+     S (left + (right + left * right)) ==< Refl >==
+     S (left + (S left * right))       ==< Refl >==
+     (S left + S left * right)         QED
 
 multLeftSuccPlus : (left : Nat) -> (right : Nat) ->
-  (S left) * right == right + (left * right)
+  (S left * right) == (right + (left * right))
 multLeftSuccPlus left right = Refl
 
+{- TODO continue
 multCommutative : (left : Nat) -> (right : Nat) ->
   left * right == right * left
 multCommutative Z right        = {! ?multCommutativeBaseCase !}
