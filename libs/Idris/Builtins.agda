@@ -32,3 +32,5 @@ data Unit : Type where unit : Unit
 
 data _==_  {l} {a : Set l} (x : a) : {b : Set l} -> (y : b) -> Set where
   Refl : x == x
+
+infix 4 _==_

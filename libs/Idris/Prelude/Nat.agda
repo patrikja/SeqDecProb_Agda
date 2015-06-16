@@ -519,28 +519,49 @@ multLeftSuccPlus : (left : Nat) -> (right : Nat) ->
   (S left * right) == (right + (left * right))
 multLeftSuccPlus left right = Refl
 
-{- TODO continue
 multCommutative : (left : Nat) -> (right : Nat) ->
-  left * right == right * left
-multCommutative Z right        = {! ?multCommutativeBaseCase !}
+  (left * right) == (right * left)
+multCommutative Z right        = sym (multZeroRightZero right)
 multCommutative (S left) right =
   let inductiveHypothesis = multCommutative left right in
-    {! ?multCommutativeStepCase !}
+    (S left * right)           ==< Refl >==
+    (right + left * right)     ==< cong {f = _+_ right} inductiveHypothesis >==
+    (right + right * left)     ==< sym (multRightSuccPlus right left) >==
+    (right * S left)           QED
+
+swapMid : (a b c d : Nat) -> ( (a + b) + (c + d) ) == ( (a + c) + (b + d) )
+swapMid a b c d =  ((a + b) + (c + d))   ==< sym (plusAssociative a b _) >==
+                   (a + (b + (c + d)))   ==< cong {f = _+_ a} (plusAssociative b c d) >==
+                   (a + ((b + c) + d))   ==< cong {f = \x -> a + (x + d)} (plusCommutative b c) >==
+                   (a + ((c + b) + d))   ==< cong {f = _+_ a} (sym (plusAssociative c b d)) >==
+                   (a + (c + (b + d)))   ==< plusAssociative a c _ >==
+                   ((a + c) + (b + d))   QED
 
 multDistributesOverPlusRight : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left * (centre + right) == (left * centre) + (left * right)
+  (left * (centre + right)) == ((left * centre) + (left * right))
 multDistributesOverPlusRight Z        centre right = Refl
 multDistributesOverPlusRight (S left) centre right =
   let inductiveHypothesis = multDistributesOverPlusRight left centre right in
-    {! ?multDistributesOverPlusRightStepCase !}
+     (S left * (centre + right))                  ==< Refl >==
+     ((centre + right) + left * (centre + right)) ==< cong {f = _+_ (centre + right)} inductiveHypothesis >==
+     ((centre + right) + (left * centre + left * right)) ==< swapMid centre right _ _ >==
+     ((centre + left * centre) + (right + left * right)) ==< Refl >==
+     (S left * centre + S left * right) QED
+
 
 multDistributesOverPlusLeft : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  (left + centre) * right == (left * right) + (centre * right)
+  (left + centre) * right  ==  (left * right) + (centre * right)
 multDistributesOverPlusLeft Z        centre right = Refl
 multDistributesOverPlusLeft (S left) centre right =
-  let inductiveHypothesis = multDistributesOverPlusLeft left centre right in
-    {! ?multDistributesOverPlusLeftStepCase !}
+  let indHyp = multDistributesOverPlusLeft left centre right in
+     (S left + centre) * right            ==< Refl >==
+     S (left + centre) * right            ==< Refl >==
+     right + (left + centre) * right      ==< cong {f = _+_ right} indHyp >==
+     right + ((left * right) + (centre * right)) ==< plusAssociative right _ _ >==
+     (right + (left * right)) + (centre * right) ==< Refl >==
+     S left * right + centre * right      QED
 
+{- TODO continue
 multAssociative : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
   left * (centre * right) == (left * centre) * right
 multAssociative Z        centre right = Refl

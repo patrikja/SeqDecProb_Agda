@@ -128,3 +128,31 @@ Idris "standard library" files here: https://github.com/idris-lang/Idris-dev/tre
 ./UniqueProperties.lidr
 ./funprogintro.lidr
 ./tagging.lidr
+
+----------------------------------------------------------------
+
+## Fixities
+
+When in doubt I have looked up fixities in the Agda stdlib.
+
+```Shell
+find . -type f -exec grep -nH -e infix {} +
+./Idris/Builtins.agda:11:infixr 2 _×_
+./Idris/Builtins.agda:12:infixr 4 _,_
+./Idris/Builtins.agda:36:infix 4 _==_
+./Idris/Prelude/Nat.agda:214:infixl 8 _+_ _-_
+./Idris/Prelude/Nat.agda:215:infixl 9 _*_
+./Idris/Prelude/Bool.agda:27:infixl 4 _&&_ _||_
+./Idris/Prelude/List.agda:17:-- infix 5 _\\_
+./Idris/Prelude/List.agda:18:infixr 7 _::_
+./Idris/Prelude/List.agda:19:infixr 7 _++_
+./Idris/Prelude/Classes.agda:9:infixl 5 _==_ _/=_
+./Idris/Prelude/Classes.agda:10:infixl 6 _<_ _<=_ _>_ _>=_
+./Idris/Prelude/Classes.agda:11:infixl 7 _<<_ _>>_
+./Idris/Prelude/Classes.agda:12:infixl 8 _+_ _-_
+./Idris/Prelude/Classes.agda:13:infixl 9 _*_ _/_
+./Idris/Prelude/Basics.agda:35:infixl 9 _∘_
+./Idris/Syntax/PreorderReasoning.agda:22:infixr 2 _==<_>==_
+./Idris/Syntax/PreorderReasoning.agda:26:infix  2 _QED
+./Idris/Data/VectType.agda:16:  infixr 7 _::_
+```
