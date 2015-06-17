@@ -561,25 +561,31 @@ multDistributesOverPlusLeft (S left) centre right =
      (right + (left * right)) + (centre * right) ==< Refl >==
      S left * right + centre * right      QED
 
-{- TODO continue
 multAssociative : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
   left * (centre * right) == (left * centre) * right
 multAssociative Z        centre right = Refl
 multAssociative (S left) centre right =
   let inductiveHypothesis = multAssociative left centre right in
-    {! ?multAssociativeStepCase !}
+     S left * (centre * right)                   ==< Refl >==
+     centre * right +  left * (centre * right)   ==< cong {f = _+_ (centre * right)} inductiveHypothesis >==
+     centre * right +  (left * centre) * right   ==< sym (multDistributesOverPlusLeft centre (mult left centre) right) >==
+     (centre + left * centre) * right            ==< Refl >==
+     (S left * centre) * right   QED
 
 multOneLeftNeutral : (right : Nat) -> 1 * right == right
-multOneLeftNeutral Z         = Refl
-multOneLeftNeutral (S right) =
-  let inductiveHypothesis = multOneLeftNeutral right in
-    {! ?multOneLeftNeutralStepCase !}
+multOneLeftNeutral right =
+    1 * right             ==< Refl >==
+    right + Z * right     ==< Refl >==
+    right + Z             ==< plusZeroRightNeutral (right) >==
+    right                 QED
+-- Simpler than the Idris lib version (no need to match on right)
 
 multOneRightNeutral : (left : Nat) -> left * 1 == left
-multOneRightNeutral Z        = Refl
-multOneRightNeutral (S left) =
-  let inductiveHypothesis = multOneRightNeutral left in
-    {! ?multOneRightNeutralStepCase !}
+multOneRightNeutral left =
+  left * 1  ==< multCommutative left 1 >==
+  1 * left  ==< multOneLeftNeutral left >==
+  left      QED
+
 
 -- Minus
 minusSuccSucc : (left : Nat) -> (right : Nat) ->
@@ -610,35 +616,51 @@ minusPlusZero Z     m = Refl
 minusPlusZero (S n) m = minusPlusZero n m
 
 minusMinusMinusPlus : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
-  left - centre - right == left - (centre + right)
+  (left - centre) - right == left - (centre + right)
 minusMinusMinusPlus Z        Z          right = Refl
 minusMinusMinusPlus (S left) Z          right = Refl
 minusMinusMinusPlus Z        (S centre) right = Refl
-minusMinusMinusPlus (S left) (S centre) right =
+minusMinusMinusPlus (S left) (S centre) right = minusMinusMinusPlus left centre right
+{- -- Unnecessary, but clarifying:
   let inductiveHypothesis = minusMinusMinusPlus left centre right in
-    {! ?minusMinusMinusPlusStepCase !}
+     (S left - S centre) - right    ==< Refl >==
+     (left - centre) - right        ==< inductiveHypothesis >==
+     left - (centre + right)        ==< Refl >==
+     S left - S (centre + right)    ==< Refl >==
+     S left - (S centre + right)    QED
+-}
 
 plusMinusLeftCancel : (left : Nat) -> (right : Nat) -> (right' : Nat) ->
   (left + right) - (left + right') == right - right'
 plusMinusLeftCancel Z right right'        = Refl
-plusMinusLeftCancel (S left) right right' =
-  let inductiveHypothesis = plusMinusLeftCancel left right right' in
-    {! ?plusMinusLeftCancelStepCase !}
+plusMinusLeftCancel (S left) right right' = plusMinusLeftCancel left right right'
 
 multDistributesOverMinusLeft : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
   (left - centre) * right == (left * right) - (centre * right)
 multDistributesOverMinusLeft Z        Z          right = Refl
 multDistributesOverMinusLeft (S left) Z          right =
-  {! ?multDistributesOverMinusLeftBaseCase !}
+   (S left - Z) * right         ==< Refl >==
+   S left * right               ==< sym (minusZeroRight _) >==
+   S left * right  -  Z         ==< Refl >==
+   S left * right  -  Z * right  QED
 multDistributesOverMinusLeft Z        (S centre) right = Refl
 multDistributesOverMinusLeft (S left) (S centre) right =
   let inductiveHypothesis = multDistributesOverMinusLeft left centre right in
-    {! ?multDistributesOverMinusLeftStepCase !}
+     (S left - S centre) * right          ==< Refl >==
+     (left - centre) * right              ==< inductiveHypothesis >==
+     left * right - centre * right        ==< sym (plusMinusLeftCancel right _ _) >==
+     (right + left * right) - (right + centre * right)==< Refl >==
+     S left * right - S centre * right    QED
 
 multDistributesOverMinusRight : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
   left * (centre - right) == (left * centre) - (left * right)
 multDistributesOverMinusRight left centre right =
-  {! ?multDistributesOverMinusRightBody !}
+   left * (centre - right)        ==< multCommutative left _ >==
+   (centre - right) * left        ==< multDistributesOverMinusLeft centre right left >==
+   centre * left - right * left   ==< cong2 _-_ (multCommutative centre left) (multCommutative right left) >==
+   left * centre - left * right   QED
+
+{- TODO continue
 
 -- Power
 powerSuccPowerLeft : (base : Nat) -> (exp : Nat) ->

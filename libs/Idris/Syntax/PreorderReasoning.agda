@@ -50,9 +50,16 @@ hcong' : forall {α} {β} {γ} -> {I : Set α} {i j : I} ->
        -> f x == f y
 hcong' _ Refl _ Refl = Refl
 
-cong2 : {A : Type} -> {B : A -> Type} -> {B' : A -> Type} ->
+cong2 : {A : Type} -> {B : Type} -> {C : Type}
+        (f : A -> B -> C) ->
+        {a a' : A} -> (a == a') ->
+        {b : B} ->  {b' : B} -> (b == b') ->
+        f a b == f a' b'
+cong2 f Refl Refl = Refl
+
+cong2' : {A : Type} -> {B : A -> Type} -> {B' : A -> Type} ->
         (f : (a : A) -> B a -> B' a) ->
         {a a' : A} -> (a == a') ->
         {b : B a} ->  {b' : B a'} -> (b == b') ->
         f a b == f a' b'
-cong2 f Refl Refl = Refl
+cong2' f Refl Refl = Refl

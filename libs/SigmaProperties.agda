@@ -103,7 +103,7 @@ sigmaIsoLemma A A' B B' isoA isoB = MkIso toAB fromAB toFromAB fromToAB
                        Sigma.getProof (MkSigma {A} {B} a'' (fromB a'' b'') )
                          ==< Refl >==
                        fromB a'' b''
-                         ==< cong2 fromB eqa eqb'' >==
+                         ==< cong2' fromB eqa eqb'' >==
                        fromB a b'
                          ==< Refl >==
                        fromB a (toB a b)
