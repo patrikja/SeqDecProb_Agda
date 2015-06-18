@@ -660,7 +660,6 @@ multDistributesOverMinusRight left centre right =
    centre * left - right * left   ==< cong2 _-_ (multCommutative centre left) (multCommutative right left) >==
    left * centre - left * right   QED
 
-{- TODO continue
 
 -- Power
 powerSuccPowerLeft : (base : Nat) -> (exp : Nat) ->
@@ -669,32 +668,37 @@ powerSuccPowerLeft base exp = Refl
 
 multPowerPowerPlus : (base : Nat) -> (exp : Nat) -> (exp' : Nat) ->
   (power base exp) * (power base exp') == power base (exp + exp')
-multPowerPowerPlus base Z       exp' = {! ?multPowerPowerPlusBaseCase !}
+multPowerPowerPlus base Z       exp' = multOneLeftNeutral (power base exp')
 multPowerPowerPlus base (S exp) exp' =
   let inductiveHypothesis = multPowerPowerPlus base exp exp' in
-    {! ?multPowerPowerPlusStepCase !}
+     (base * power base exp) * power base exp' ==< sym (multAssociative base _ _) >==
+     base * (power base exp * power base exp') ==< cong {f = _*_ base} inductiveHypothesis >==
+     (base * power base (plus exp exp'))  QED
 
-powerZeroOne : (base : Nat) -> power base 0 == S Z
+powerZeroOne : (base : Nat) ->     power base 0 == 1
 powerZeroOne base = Refl
 
-powerOneNeutral : (base : Nat) -> power base 1 == base
+powerOneNeutral : (base : Nat) ->  power base 1 == base
 powerOneNeutral Z        = Refl
-powerOneNeutral (S base) =
-  let inductiveHypothesis = powerOneNeutral base in
-    {! ?powerOneNeutralStepCase !}
+powerOneNeutral (S base) = cong {f = S} (powerOneNeutral base)
 
-powerOneSuccOne : (exp : Nat) -> power 1 exp == S Z
+powerOneSuccOne : (exp : Nat) ->   power 1 exp == 1
 powerOneSuccOne Z       = Refl
 powerOneSuccOne (S exp) =
   let inductiveHypothesis = powerOneSuccOne exp in
-    {! ?powerOneSuccOneStepCase !}
+     power 1 exp  +  0 ==< plusZeroRightNeutral _ >==
+     power 1 exp       ==< inductiveHypothesis    >==
+     1  QED
 
-powerSuccSuccMult : (base : Nat) -> power base 2 == mult base base
-powerSuccSuccMult Z        = Refl
-powerSuccSuccMult (S base) =
-  let inductiveHypothesis = powerSuccSuccMult base in
-    {! ?powerSuccSuccMultStepCase !}
+powerSuccSuccMult : (base : Nat) -> power base 2 == base * base
+powerSuccSuccMult base = power base 2 ==< Refl >==
+                         base * power base 1 ==< Refl >==
+                         base * (base * power base 0) ==< Refl >==
+                         base * (base * 1) ==< cong {f = _*_ base} (multOneRightNeutral base) >==
+                         base * base  QED
+-- Unneccessary case in Idris
 
+{- TODO continue
 powerPowerMultPower : (base : Nat) -> (exp : Nat) -> (exp' : Nat) ->
   power (power base exp) exp' == power base (exp * exp')
 powerPowerMultPower base exp Z        = {! ?powerPowerMultPowerBaseCase !}
