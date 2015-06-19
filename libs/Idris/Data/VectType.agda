@@ -47,7 +47,7 @@ module Vect where
   -- ||| Show that the length function on vectors in fact calculates the length
   lengthCorrect : {a : Type} -> (n : Nat) -> (xs : Vect n a) -> length xs == n
   lengthCorrect Z     []        = Refl
-  lengthCorrect (S n) (x :: xs) = cong {f = S} (lengthCorrect n xs)
+  lengthCorrect (S n) (x :: xs) = cong S (lengthCorrect n xs)
 
   --------------------------------------------------------------------------------
   -- Indexing into vectors

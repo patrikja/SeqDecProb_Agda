@@ -427,14 +427,14 @@ plusZeroRightNeutral : (left : Nat) -> (left + 0) == left
 plusZeroRightNeutral Z     = Refl
 plusZeroRightNeutral (S n) =
   let inductiveHypothesis = plusZeroRightNeutral n in
-    cong {f = S} inductiveHypothesis -- ?plusZeroRightNeutralStepCase
+    cong S inductiveHypothesis -- ?plusZeroRightNeutralStepCase
 
 plusSuccRightSucc : (left : Nat) -> (right : Nat) ->
   S (left + right) == (left + S right)
 plusSuccRightSucc Z right        = Refl
 plusSuccRightSucc (S left) right =
   let inductiveHypothesis = plusSuccRightSucc left right in
-    cong {f = S} inductiveHypothesis
+    cong S inductiveHypothesis
 
 
 plusCommutative : (left : Nat) -> (right : Nat) ->
@@ -443,7 +443,7 @@ plusCommutative Z        Z         = Refl
 plusCommutative Z        (S right) = trans (     plusZeroLeftNeutral  (S right))
                                            (sym (plusZeroRightNeutral (S right)))
 plusCommutative (S left) Z         = plusZeroRightNeutral (S left)
-plusCommutative (S left) (S right) = cong {f = S}
+plusCommutative (S left) (S right) = cong S
                                        (left + S right    ==< plusCommutative left (S right) >==
                                         S (right + left)  ==< plusSuccRightSucc right left   >==
                                         right + S left    QED)
@@ -452,7 +452,7 @@ plusCommutative (S left) (S right) = cong {f = S}
 plusAssociative : (left : Nat) -> (centre : Nat) -> (right : Nat) ->
   (left + (centre + right)) == ((left + centre) + right)
 plusAssociative Z        centre right = Refl
-plusAssociative (S left) centre right = cong {f = S} inductiveHypothesis
+plusAssociative (S left) centre right = cong S inductiveHypothesis
   where inductiveHypothesis = plusAssociative left centre right
 
 
@@ -506,11 +506,11 @@ multRightSuccPlus Z        right = Refl
 multRightSuccPlus (S left) right =
   let inductiveHypothesis = multRightSuccPlus left right in
      (S left * S right)                ==< Refl >==
-     (S right) + (left * S right)      ==< cong {f = (_+_) (S right)} inductiveHypothesis >==
+     (S right) + (left * S right)      ==< cong ((_+_) (S right)) inductiveHypothesis >==
      (S right) + (left + left * right) ==< Refl >==
-     S (right + (left + left * right)) ==< cong {f = S} (plusAssociative right left (left * right)) >==
-     S ((right + left) + left * right) ==< cong {f = \x -> S (x + left * right)} (plusCommutative right left) >==
-     S ((left + right) + left * right) ==< cong {f = S} (sym (plusAssociative left right (left * right))) >==
+     S (right + (left + left * right)) ==< cong S (plusAssociative right left (left * right)) >==
+     S ((right + left) + left * right) ==< cong (\x -> S (x + left * right)) (plusCommutative right left) >==
+     S ((left + right) + left * right) ==< cong S (sym (plusAssociative left right (left * right))) >==
      S (left + (right + left * right)) ==< Refl >==
      S (left + (S left * right))       ==< Refl >==
      (S left + S left * right)         QED
@@ -525,15 +525,15 @@ multCommutative Z right        = sym (multZeroRightZero right)
 multCommutative (S left) right =
   let inductiveHypothesis = multCommutative left right in
     (S left * right)           ==< Refl >==
-    (right + left * right)     ==< cong {f = _+_ right} inductiveHypothesis >==
+    (right + left * right)     ==< cong (_+_ right) inductiveHypothesis >==
     (right + right * left)     ==< sym (multRightSuccPlus right left) >==
     (right * S left)           QED
 
 swapMid : (a b c d : Nat) -> ( (a + b) + (c + d) ) == ( (a + c) + (b + d) )
 swapMid a b c d =  ((a + b) + (c + d))   ==< sym (plusAssociative a b _) >==
-                   (a + (b + (c + d)))   ==< cong {f = _+_ a} (plusAssociative b c d) >==
-                   (a + ((b + c) + d))   ==< cong {f = \x -> a + (x + d)} (plusCommutative b c) >==
-                   (a + ((c + b) + d))   ==< cong {f = _+_ a} (sym (plusAssociative c b d)) >==
+                   (a + (b + (c + d)))   ==< cong (_+_ a) (plusAssociative b c d) >==
+                   (a + ((b + c) + d))   ==< cong (\x -> a + (x + d)) (plusCommutative b c) >==
+                   (a + ((c + b) + d))   ==< cong (_+_ a) (sym (plusAssociative c b d)) >==
                    (a + (c + (b + d)))   ==< plusAssociative a c _ >==
                    ((a + c) + (b + d))   QED
 
@@ -543,7 +543,7 @@ multDistributesOverPlusRight Z        centre right = Refl
 multDistributesOverPlusRight (S left) centre right =
   let inductiveHypothesis = multDistributesOverPlusRight left centre right in
      (S left * (centre + right))                  ==< Refl >==
-     ((centre + right) + left * (centre + right)) ==< cong {f = _+_ (centre + right)} inductiveHypothesis >==
+     ((centre + right) + left * (centre + right)) ==< cong (_+_ (centre + right)) inductiveHypothesis >==
      ((centre + right) + (left * centre + left * right)) ==< swapMid centre right _ _ >==
      ((centre + left * centre) + (right + left * right)) ==< Refl >==
      (S left * centre + S left * right) QED
@@ -556,7 +556,7 @@ multDistributesOverPlusLeft (S left) centre right =
   let indHyp = multDistributesOverPlusLeft left centre right in
      (S left + centre) * right            ==< Refl >==
      S (left + centre) * right            ==< Refl >==
-     right + (left + centre) * right      ==< cong {f = _+_ right} indHyp >==
+     right + (left + centre) * right      ==< cong (_+_ right) indHyp >==
      right + ((left * right) + (centre * right)) ==< plusAssociative right _ _ >==
      (right + (left * right)) + (centre * right) ==< Refl >==
      S left * right + centre * right      QED
@@ -567,7 +567,7 @@ multAssociative Z        centre right = Refl
 multAssociative (S left) centre right =
   let inductiveHypothesis = multAssociative left centre right in
      S left * (centre * right)                   ==< Refl >==
-     centre * right +  left * (centre * right)   ==< cong {f = _+_ (centre * right)} inductiveHypothesis >==
+     centre * right +  left * (centre * right)   ==< cong (_+_ (centre * right)) inductiveHypothesis >==
      centre * right +  (left * centre) * right   ==< sym (multDistributesOverPlusLeft centre (mult left centre) right) >==
      (centre + left * centre) * right            ==< Refl >==
      (S left * centre) * right   QED
@@ -672,7 +672,7 @@ multPowerPowerPlus base Z       exp' = multOneLeftNeutral (power base exp')
 multPowerPowerPlus base (S exp) exp' =
   let inductiveHypothesis = multPowerPowerPlus base exp exp' in
      (base * power base exp) * power base exp' ==< sym (multAssociative base _ _) >==
-     base * (power base exp * power base exp') ==< cong {f = _*_ base} inductiveHypothesis >==
+     base * (power base exp * power base exp') ==< cong (_*_ base) inductiveHypothesis >==
      (base * power base (plus exp exp'))  QED
 
 powerZeroOne : (base : Nat) ->     power base 0 == 1
@@ -680,7 +680,7 @@ powerZeroOne base = Refl
 
 powerOneNeutral : (base : Nat) ->  power base 1 == base
 powerOneNeutral Z        = Refl
-powerOneNeutral (S base) = cong {f = S} (powerOneNeutral base)
+powerOneNeutral (S base) = cong S (powerOneNeutral base)
 
 powerOneSuccOne : (exp : Nat) ->   power 1 exp == 1
 powerOneSuccOne Z       = Refl
@@ -694,7 +694,7 @@ powerSuccSuccMult : (base : Nat) -> power base 2 == base * base
 powerSuccSuccMult base = power base 2 ==< Refl >==
                          base * power base 1 ==< Refl >==
                          base * (base * power base 0) ==< Refl >==
-                         base * (base * 1) ==< cong {f = _*_ base} (multOneRightNeutral base) >==
+                         base * (base * 1) ==< cong (_*_ base) (multOneRightNeutral base) >==
                          base * base  QED
 -- Unneccessary case in Idris
 
@@ -768,7 +768,7 @@ maximumCommutative (S k) Z = Refl
 maximumCommutative (S k) (S j) = {! rewrite maximumCommutative k j in Refl !}
 maximumIdempotent : (n : Nat) -> maximum n n == n
 maximumIdempotent Z = Refl
-maximumIdempotent (S k) = cong (maximumIdempotent k)
+maximumIdempotent (S k) = cong ? (maximumIdempotent k)
 
 minimumAssociative : (l c r : Nat) -> minimum l (minimum c r) == minimum (minimum l c) r
 minimumAssociative Z c r = Refl
@@ -782,7 +782,7 @@ minimumCommutative (S k) Z = Refl
 minimumCommutative (S k) (S j) = {! rewrite minimumCommutative k j in Refl !}
 minimumIdempotent : (n : Nat) -> minimum n n == n
 minimumIdempotent Z = Refl
-minimumIdempotent (S k) = cong (minimumIdempotent k)
+minimumIdempotent (S k) = cong ? (minimumIdempotent k)
 
 minimumZeroZeroRight : (right : Nat) -> minimum 0 right == Z
 minimumZeroZeroRight Z = Refl
@@ -820,19 +820,19 @@ maximumSuccSucc (S left) (S right) =
 
 sucMaxL : (l : Nat) -> maximum (S l) l == (S l)
 sucMaxL Z = Refl
-sucMaxL (S l) = cong (sucMaxL l)
+sucMaxL (S l) = cong ? (sucMaxL l)
 
 sucMaxR : (l : Nat) -> maximum l (S l) == (S l)
 sucMaxR Z = Refl
-sucMaxR (S l) = cong (sucMaxR l)
+sucMaxR (S l) = cong ? (sucMaxR l)
 
 sucMinL : (l : Nat) -> minimum (S l) l == l
 sucMinL Z = Refl
-sucMinL (S l) = cong (sucMinL l)
+sucMinL (S l) = cong ? (sucMinL l)
 
 sucMinR : (l : Nat) -> minimum l (S l) == l
 sucMinR Z = Refl
-sucMinR (S l) = cong (sucMinR l)
+sucMinR (S l) = cong ? (sucMinR l)
 
 -- div and mod
 modZeroZero : (n : Nat) -> mod 0 n == Z

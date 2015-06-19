@@ -143,7 +143,7 @@ decLT m n = decLTE (S m) n
 -- ||| LTE is unique
 uniqueLTE : {m n : Nat} -> (p1 : LTE m n) -> (p2 : LTE m n) -> (p1 == p2)
 uniqueLTE  LTEZero     LTEZero    = Refl
-uniqueLTE (LTESucc p) (LTESucc q) = cong (uniqueLTE p q)
+uniqueLTE (LTESucc p) (LTESucc q) = cong LTESucc (uniqueLTE p q)
 
 -- ||| LT is unique
 uniqueLT : {m n : Nat} -> (p1 : LT m n) -> (p2 : LT m n) -> (p1 == p2)

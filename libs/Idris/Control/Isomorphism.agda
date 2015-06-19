@@ -37,10 +37,10 @@ isoTrans : {a : Type} -> {b : Type} -> {c : Type} ->
 isoTrans (MkIso to from toFrom fromTo) (MkIso to' from' toFrom' fromTo') =
   MkIso (\x -> to' (to x))
         (\y -> from (from' y))
-        (\y -> (to' (to (from (from' y))))  ==< cong {f = to'} (toFrom (from' y)) >==
+        (\y -> (to' (to (from (from' y))))  ==< cong to' (toFrom (from' y)) >==
                ((to' (from' y))             ==< toFrom' y >==
                y                            QED))
-        (\x -> (from (from' (to' (to x))))  ==< cong {f = from} (fromTo' (to x)) >==
+        (\x -> (from (from' (to' (to x))))  ==< cong from (fromTo' (to x)) >==
               ((from (to x))                ==< fromTo x  >==
                x                            QED) )
 
@@ -128,11 +128,11 @@ eitherCong {a = a} {a' = a'} {b = b} {b' = b'}
           eitherMap f g (Left x)  = Left (f x)
           eitherMap f g (Right x) = Right (g x)
           ok1 : (x : Either a' b') -> eitherMap to to' (eitherMap from from' x) == x
-          ok1 (Left x)  = cong {f = Left}  (toFrom x)
-          ok1 (Right x) = cong {f = Right} (toFrom' x)
+          ok1 (Left x)  = cong Left  (toFrom x)
+          ok1 (Right x) = cong Right (toFrom' x)
           ok2 : (x : Either a b) -> eitherMap from from' (eitherMap to to' x) == x
-          ok2 (Left x)  = cong {f = Left}  (fromTo x)
-          ok2 (Right x) = cong {f = Right} (fromTo' x)
+          ok2 (Left x)  = cong Left  (fromTo x)
+          ok2 (Right x) = cong Right (fromTo' x)
 
 -- ||| Isomorphism is a congruence with regards to disjunction on the left
 eitherCongLeft : {a : Type} -> {a' : Type} -> {b : Type} -> {b' : Type} ->
@@ -279,10 +279,10 @@ maybeCong : Iso a b -> Iso (Maybe a) (Maybe b)
 maybeCong {a} {b} (MkIso to from toFrom fromTo) = MkIso (map to) (map from) ok1 ok2
   where ok1 : (y : Maybe b) -> map to (map from y) == y
         ok1 Nothing = Refl
-        ok1 (Just x) = (Just (to (from x))) ={ cong (toFrom x) }= (Just x) QED
+        ok1 (Just x) = (Just (to (from x))) ={ cong ? (toFrom x) }= (Just x) QED
         ok2 : (x : Maybe a) -> map from (map to x) == x
         ok2 Nothing = Refl
-        ok2 (Just x) = (Just (from (to x))) ={ cong (fromTo x) }= (Just x) QED
+        ok2 (Just x) = (Just (from (to x))) ={ cong ? (fromTo x) }= (Just x) QED
 
 -- ||| `Maybe a` is the same as `Either a ()`
 maybeEither : Iso (Maybe a) (Either a ())

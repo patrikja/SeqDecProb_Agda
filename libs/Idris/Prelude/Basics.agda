@@ -52,9 +52,12 @@ apply f a = f a
 
 -- ||| Equality is a congruence.
 cong : {t : Type} -> {u : Type} ->
-       {f : t -> u} -> {a : t} -> {b : t} ->
+       (f : t -> u) -> {a : t} -> {b : t} ->
                        (a == b) -> f a == f b
-cong Refl = Refl
+cong f Refl = Refl
+-- Note: Difference from Idris: f is an explicit argument (because in
+-- 90% of the uses the function is needed for type checking).
+
 -- A stronger heterogenous variant of cong would be useful sometimes.
 -- See ../Syntax/PreorderReasoning.agda
 

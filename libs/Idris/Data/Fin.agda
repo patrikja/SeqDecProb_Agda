@@ -51,7 +51,7 @@ finToNatInjective : {k : Nat} ->
 finToNatInjective FZ     FZ     _   = Refl
 finToNatInjective FZ     (FS n) ()
 finToNatInjective (FS m) FZ     ()
-finToNatInjective (FS m) (FS n) prf = cong (finToNatInjective m n (succInjective (finToNat m) (finToNat n) prf))
+finToNatInjective (FS m) (FS n) prf = cong FS (finToNatInjective m n (succInjective (finToNat m) (finToNat n) prf))
 --
 
 {- TODO
@@ -221,6 +221,6 @@ instance DecEq (Fin n) where
   decEq FZ (FS f) = No FZNotFS
   decEq (FS f) FZ = No $ negEqSym FZNotFS
   decEq (FS f) (FS f') with (decEq f f')
-    | Yes p = Yes $ cong p
+    | Yes p = Yes $ cong ? p
     | No p = No $ \h => p $ FSinjective {f = f} {f' = f'} h
 -}

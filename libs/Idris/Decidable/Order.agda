@@ -57,7 +57,7 @@ instance Equivalence t ((=) {A = t} {B = t}) where
   symmetric a b prf = sym prf
 
 instance Congruence t f ((=) {A = t} {B = t}) where
-  congruent a b = cong {a = a} {b = b} {f = f}
+  congruent a b = cong {a = a} {b = b} f
 
 --------------------------------------------------------------------------------
 -- Natural numbers

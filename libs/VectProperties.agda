@@ -87,7 +87,7 @@ lookupIndexLemma FZ (x :: xs) inj2 (There q) | MkSigma j z with inj2 FZ (FS j) (
 ... | ()    -- x is in two places which contradicts Injective2
 lookupIndexLemma (FS i) (.(index i xs) :: xs) inj2 Here with inj2 (FS i) FZ (\()) Refl
 ... | ()    -- x is in two places which contradicts Injective2
-lookupIndexLemma (FS i) (x :: xs) inj2 (There q) = cong {f = FS} (lookupIndexLemma i xs (tailInj2 x xs inj2) q)
+lookupIndexLemma (FS i) (x :: xs) inj2 (There q) = cong FS (lookupIndexLemma i xs (tailInj2 x xs inj2) q)
 
 -- Membership, quantifiers:
 
