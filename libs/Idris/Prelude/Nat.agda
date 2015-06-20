@@ -27,7 +27,7 @@ data Nat : Type where
 -- name hints for interactive editing
 -- %name Nat k,j,i,n,m
 
-{- TODO
+{- TODOinst
 instance Uninhabited (Z = S n) where
   uninhabited Refl impossible
 -}
@@ -195,7 +195,7 @@ eqNat = record { _===_ = _===_} where
   _ === _         = False
 
 
-{- TODO
+{- TODOinst
 instance Eq Nat where
   Z == Z         = True
   (S l) == (S r) = l == r
@@ -354,7 +354,7 @@ instance Integral Nat where
 div = divNat
 mod = modNat
 
-{- TODO convince the termination checker
+{- TODOterm convince the termination checker
 log2 : Nat -> Nat
 log2 Z = Z
 log2 (S Z) = Z
@@ -364,7 +364,7 @@ log2 n = S (log2 (divNat n 2))
 --------------------------------------------------------------------------------
 -- GCD and LCM
 --------------------------------------------------------------------------------
-{- TODO convince the termination checker
+{- TODOterm convince the termination checker
 gcd : Nat -> Nat -> Nat
 gcd a Z = a
 gcd a b = gcd b (modNat a b)
@@ -698,13 +698,20 @@ powerSuccSuccMult base = power base 2 ==< Refl >==
                          base * base  QED
 -- Unneccessary case in Idris
 
-{- TODO continue
 powerPowerMultPower : (base : Nat) -> (exp : Nat) -> (exp' : Nat) ->
   power (power base exp) exp' == power base (exp * exp')
-powerPowerMultPower base exp Z        = {! ?powerPowerMultPowerBaseCase !}
-powerPowerMultPower base exp (S exp') =
+powerPowerMultPower base exp Z         =
+  power (power base exp) 0  ==< Refl >==
+  1                     ==< Refl >==
+  power base 0          ==< cong (power base) (sym (multZeroRightZero exp)) >==
+  power base (exp * 0)  QED
+
+powerPowerMultPower base exp (S exp')  =
   let inductiveHypothesis = powerPowerMultPower base exp exp' in
-    {! ?powerPowerMultPowerStepCase !}
+     power base exp  *   power (power base exp) exp'  ==< cong (_*_ (power base exp)) inductiveHypothesis >==
+     power base exp  *   power base (exp * exp')      ==< multPowerPowerPlus base exp _ >==
+     power base (exp + exp * exp')                    ==< cong (power base) (sym (multRightSuccPlus exp exp')) >==
+     power base (exp * S exp')    QED
 
 -- Pred
 predSucc : (n : Nat) -> pred (S n) == n
@@ -714,11 +721,17 @@ minusSuccPred : (left : Nat) -> (right : Nat) ->
   left - (S right) == pred (left - right)
 minusSuccPred Z        right = Refl
 minusSuccPred (S left) Z =
-  let inductiveHypothesis = minusSuccPred left Z in
-    {! ?minusSuccPredStepCase !}
+     S left - (S Z)     ==< Refl >==
+     left - Z           ==< minusZeroRight left >==
+     left               ==< Refl >==
+     pred (S left)      ==< Refl >==
+     pred (S left - Z)   QED
 minusSuccPred (S left) (S right) =
   let inductiveHypothesis = minusSuccPred left right in
-    {! ?minusSuccPredStepCase' !}
+     S left - S (S right)     ==< Refl >==
+     left   - S right         ==< inductiveHypothesis >==
+     pred (left - right)      ==< Refl >==
+     pred (S left - S right)  QED
 
 -- boolElim
 boolElimSuccSucc : (cond : Bool) -> (t : Nat) -> (f : Nat) ->
@@ -726,6 +739,7 @@ boolElimSuccSucc : (cond : Bool) -> (t : Nat) -> (f : Nat) ->
 boolElimSuccSucc True  t f = Refl
 boolElimSuccSucc False t f = Refl
 
+{- TODO continue
 boolElimPlusPlusLeft : (cond : Bool) -> (left : Nat) -> (t : Nat) -> (f : Nat) ->
   left + (boolElim cond t f) == boolElim cond (left + t) (left + f)
 boolElimPlusPlusLeft True  left t f = Refl
