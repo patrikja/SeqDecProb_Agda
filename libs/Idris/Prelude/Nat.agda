@@ -734,31 +734,33 @@ minusSuccPred (S left) (S right) =
      pred (S left - S right)  QED
 
 -- boolElim
+boolElimFun : {A B : Type} -> (fun : A -> B) -> (cond : Bool) -> (t : A) -> (f : A) ->
+  fun (boolElim cond t f) == boolElim cond (fun t) (fun f)
+boolElimFun fun True  t f = Refl
+boolElimFun fun False t f = Refl
+
 boolElimSuccSucc : (cond : Bool) -> (t : Nat) -> (f : Nat) ->
   S (boolElim cond t f) == boolElim cond (S t) (S f)
-boolElimSuccSucc True  t f = Refl
-boolElimSuccSucc False t f = Refl
+boolElimSuccSucc = boolElimFun S
 
-{- TODO continue
 boolElimPlusPlusLeft : (cond : Bool) -> (left : Nat) -> (t : Nat) -> (f : Nat) ->
   left + (boolElim cond t f) == boolElim cond (left + t) (left + f)
-boolElimPlusPlusLeft True  left t f = Refl
-boolElimPlusPlusLeft False left t f = Refl
+boolElimPlusPlusLeft cond left = boolElimFun (_+_ left) cond
 
 boolElimPlusPlusRight : (cond : Bool) -> (right : Nat) -> (t : Nat) -> (f : Nat) ->
   (boolElim cond t f) + right == boolElim cond (t + right) (f + right)
-boolElimPlusPlusRight True  right t f = Refl
-boolElimPlusPlusRight False right t f = Refl
+boolElimPlusPlusRight cond right = boolElimFun (λ z → z + right) cond
+
 
 boolElimMultMultLeft : (cond : Bool) -> (left : Nat) -> (t : Nat) -> (f : Nat) ->
   left * (boolElim cond t f) == boolElim cond (left * t) (left * f)
-boolElimMultMultLeft True  left t f = Refl
-boolElimMultMultLeft False left t f = Refl
+boolElimMultMultLeft cond left = boolElimFun (_*_ left) cond
+
 
 boolElimMultMultRight : (cond : Bool) -> (right : Nat) -> (t : Nat) -> (f : Nat) ->
   (boolElim cond t f) * right == boolElim cond (t * right) (f * right)
-boolElimMultMultRight True  right t f = Refl
-boolElimMultMultRight False right t f = Refl
+boolElimMultMultRight cond right = boolElimFun (λ z → z * right) cond
+
 
 -- Orders
 lteNTrue : (n : Nat) -> lte n n == True
@@ -774,334 +776,78 @@ maximumAssociative : (l c r : Nat) -> maximum l (maximum c r) == maximum (maximu
 maximumAssociative Z c r = Refl
 maximumAssociative (S k) Z r = Refl
 maximumAssociative (S k) (S j) Z = Refl
-maximumAssociative (S k) (S j) (S i) = {! rewrite maximumAssociative k j i in Refl !}
+maximumAssociative (S k) (S j) (S i) = eqSucc _ _ (maximumAssociative k j i)
+
 maximumCommutative : (l r : Nat) -> maximum l r == maximum r l
 maximumCommutative Z Z = Refl
 maximumCommutative Z (S k) = Refl
 maximumCommutative (S k) Z = Refl
-maximumCommutative (S k) (S j) = {! rewrite maximumCommutative k j in Refl !}
+maximumCommutative (S k) (S j) =  eqSucc _ _ (maximumCommutative k j)
+
 maximumIdempotent : (n : Nat) -> maximum n n == n
 maximumIdempotent Z = Refl
-maximumIdempotent (S k) = cong ? (maximumIdempotent k)
+maximumIdempotent (S k) = cong S (maximumIdempotent k)
 
 minimumAssociative : (l c r : Nat) -> minimum l (minimum c r) == minimum (minimum l c) r
 minimumAssociative Z c r = Refl
 minimumAssociative (S k) Z r = Refl
 minimumAssociative (S k) (S j) Z = Refl
-minimumAssociative (S k) (S j) (S i) = {! rewrite minimumAssociative k j i in Refl !}
+minimumAssociative (S k) (S j) (S i) =  eqSucc _ _ (minimumAssociative k j i)
+
 minimumCommutative : (l r : Nat) -> minimum l r == minimum r l
 minimumCommutative Z Z = Refl
 minimumCommutative Z (S k) = Refl
 minimumCommutative (S k) Z = Refl
-minimumCommutative (S k) (S j) = {! rewrite minimumCommutative k j in Refl !}
+minimumCommutative (S k) (S j) =  eqSucc _ _ (minimumCommutative k j)
+
 minimumIdempotent : (n : Nat) -> minimum n n == n
 minimumIdempotent Z = Refl
-minimumIdempotent (S k) = cong ? (minimumIdempotent k)
+minimumIdempotent (S k) = cong S (minimumIdempotent k)
 
-minimumZeroZeroRight : (right : Nat) -> minimum 0 right == Z
-minimumZeroZeroRight Z = Refl
-minimumZeroZeroRight (S right) = minimumZeroZeroRight right
 
-minimumZeroZeroLeft : (left : Nat) -> minimum left 0 == Z
+minimumZeroZeroRight : (right : Nat) -> minimum 0 right == 0
+minimumZeroZeroRight x = Refl
+-- Idris uses unnecessary case
+
+minimumZeroZeroLeft : (left : Nat) -> minimum left 0 == 0
 minimumZeroZeroLeft Z        = Refl
 minimumZeroZeroLeft (S left) = Refl
 
 minimumSuccSucc : (left : Nat) -> (right : Nat) ->
   minimum (S left) (S right) == S (minimum left right)
-minimumSuccSucc Z        Z         = Refl
-minimumSuccSucc (S left) Z         = Refl
-minimumSuccSucc Z        (S right) = Refl
-minimumSuccSucc (S left) (S right) =
-  let inductiveHypothesis = minimumSuccSucc left right in
-    {! ?minimumSuccSuccStepCase !}
+minimumSuccSucc x y = Refl
+-- Idris uses unnecessary case on both x and y
 
-maximumZeroNRight : (right : Nat) -> maximum Z right == right
-maximumZeroNRight Z         = Refl
-maximumZeroNRight (S right) = Refl
+maximumZeroNRight : (right : Nat) -> maximum 0 right == right
+maximumZeroNRight x         = Refl
+-- Idris uses unnecessary case
 
-maximumZeroNLeft : (left : Nat) -> maximum left Z == left
+maximumZeroNLeft : (left : Nat) -> maximum left 0 == left
 maximumZeroNLeft Z        = Refl
 maximumZeroNLeft (S left) = Refl
 
 maximumSuccSucc : (left : Nat) -> (right : Nat) ->
   S (maximum left right) == maximum (S left) (S right)
-maximumSuccSucc Z        Z         = Refl
-maximumSuccSucc (S left) Z         = Refl
-maximumSuccSucc Z        (S right) = Refl
-maximumSuccSucc (S left) (S right) =
-  let inductiveHypothesis = maximumSuccSucc left right in
-    {! ?maximumSuccSuccStepCase !}
+maximumSuccSucc x        y         = Refl
+-- Idris uses unnecessary case on both x and y
 
 sucMaxL : (l : Nat) -> maximum (S l) l == (S l)
 sucMaxL Z = Refl
-sucMaxL (S l) = cong ? (sucMaxL l)
+sucMaxL (S l) = cong S (sucMaxL l)
 
 sucMaxR : (l : Nat) -> maximum l (S l) == (S l)
 sucMaxR Z = Refl
-sucMaxR (S l) = cong ? (sucMaxR l)
+sucMaxR (S l) = cong S (sucMaxR l)
 
 sucMinL : (l : Nat) -> minimum (S l) l == l
 sucMinL Z = Refl
-sucMinL (S l) = cong ? (sucMinL l)
+sucMinL (S l) = cong S (sucMinL l)
 
 sucMinR : (l : Nat) -> minimum l (S l) == l
 sucMinR Z = Refl
-sucMinR (S l) = cong ? (sucMinR l)
+sucMinR (S l) = cong S (sucMinR l)
 
 -- div and mod
-modZeroZero : (n : Nat) -> mod 0 n == Z
+modZeroZero : (n : Nat) -> mod 0 n == 0
 modZeroZero Z     = Refl
 modZeroZero (S n) = Refl
-
---------------------------------------------------------------------------------
--- Proofs
---------------------------------------------------------------------------------
-{-
-
-powerPowerMultPowerStepCase = proof {
-    intros;
-    rewrite sym inductiveHypothesis;
-    rewrite sym (multRightSuccPlus exp exp');
-    rewrite (multPowerPowerPlus base exp (mult exp exp'));
-    trivial;
-}
-
-powerPowerMultPowerBaseCase = proof {
-    intros;
-    rewrite sym (multZeroRightZero exp);
-    trivial;
-}
-
-powerSuccSuccMultStepCase = proof {
-    intros;
-    rewrite (multOneRightNeutral base);
-    rewrite sym (multOneRightNeutral base);
-    trivial;
-}
-
-powerOneSuccOneStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    rewrite sym (plusZeroRightNeutral (power (S Z) exp));
-    trivial;
-}
-
-powerOneNeutralStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-multAssociativeStepCase = proof {
-    intros;
-    rewrite sym (multDistributesOverPlusLeft centre (mult left centre) right);
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-minusSuccPredStepCase' = proof {
-    intros;
-    rewrite sym inductiveHypothesis;
-    trivial;
-}
-
-minusSuccPredStepCase = proof {
-    intros;
-    rewrite (minusZeroRight left);
-    trivial;
-}
-
-multPowerPowerPlusStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    rewrite (multAssociative base (power base exp) (power base exp'));
-    trivial;
-}
-
-multPowerPowerPlusBaseCase = proof {
-    intros;
-    rewrite (plusZeroRightNeutral (power base exp'));
-    trivial;
-}
-
-multOneRightNeutralStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-multOneLeftNeutralStepCase = proof {
-    intros;
-    rewrite (plusZeroRightNeutral right);
-    trivial;
-}
-
-multDistributesOverPlusLeftStepCase = proof {
-    intros;
-    rewrite sym inductiveHypothesis;
-    rewrite sym (plusAssociative right (mult left right) (mult centre right));
-    trivial;
-}
-
-multDistributesOverPlusRightStepCase = proof {
-    intros;
-    rewrite sym inductiveHypothesis;
-    rewrite sym (plusAssociative (plus centre (mult left centre)) right (mult left right));
-    rewrite (plusAssociative centre (mult left centre) right);
-    rewrite sym (plusCommutative (mult left centre) right);
-    rewrite sym (plusAssociative centre right (mult left centre));
-    rewrite sym (plusAssociative (plus centre right) (mult left centre) (mult left right));
-    trivial;
-}
-
-multCommutativeStepCase = proof {
-    intros;
-    rewrite sym (multRightSuccPlus right left);
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-multCommutativeBaseCase = proof {
-    intros;
-    rewrite (multZeroRightZero right);
-    trivial;
-}
-
-multRightSuccPlusStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    rewrite sym inductiveHypothesis;
-    rewrite sym (plusAssociative right left (mult left right));
-    rewrite sym (plusCommutative right left);
-    rewrite (plusAssociative left right (mult left right));
-    trivial;
-}
-
-multZeroRightZeroStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-plusAssociativeStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-plusCommutativeStepCase = proof {
-    intros;
-    rewrite (plusSuccRightSucc right left);
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-plusSuccRightSuccStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-plusCommutativeBaseCase = proof {
-    intros;
-    rewrite sym (plusZeroRightNeutral right);
-    trivial;
-}
-
-plusZeroRightNeutralStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-maximumSuccSuccStepCase = proof {
-    intros;
-    rewrite sym (boolElimSuccSucc (lte left right) (S right) (S left));
-    trivial;
-}
-
-minimumSuccSuccStepCase = proof {
-    intros;
-    rewrite (boolElimSuccSucc (lte left right) (S left) (S right));
-    trivial;
-}
-
-multDistributesOverMinusRightBody = proof {
-    intros;
-    rewrite sym (multCommutative left (minus centre right));
-    rewrite sym (multDistributesOverMinusLeft centre right left);
-    rewrite sym (multCommutative centre left);
-    rewrite sym (multCommutative right left);
-    trivial;
-}
-
-multDistributesOverMinusLeftStepCase = proof {
-    intros;
-    rewrite sym (plusMinusLeftCancel right (mult left right) (mult centre right));
-    trivial;
-}
-
-multDistributesOverMinusLeftBaseCase = proof {
-    intros;
-    rewrite (minusZeroRight (plus right (mult left right)));
-    trivial;
-}
-
-plusMinusLeftCancelStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-minusMinusMinusPlusStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-plusLeftLeftRightZeroBaseCase = proof {
-    intros;
-    rewrite p;
-    trivial;
-}
-
-plusLeftLeftRightZeroStepCase = proof {
-    intros;
-    refine inductiveHypothesis;
-    let p' = succInjective (plus left right) left p;
-    rewrite p';
-    trivial;
-}
-
-plusRightCancelStepCase = proof {
-    intros;
-    refine inductiveHypothesis;
-    refine succInjective _ _ ?;
-    rewrite sym (plusSuccRightSucc left right);
-    rewrite sym (plusSuccRightSucc left' right);
-    rewrite p;
-    trivial;
-}
-
-plusRightCancelBaseCase = proof {
-    intros;
-    rewrite (plusZeroRightNeutral left);
-    rewrite (plusZeroRightNeutral left');
-    rewrite p;
-    trivial;
-}
-
-plusLeftCancelStepCase = proof {
-    intros;
-    let injectiveProof = succInjective (plus left right) (plus left right') p;
-    rewrite (inductiveHypothesis injectiveProof);
-    trivial;
-}
-
-plusLeftCancelBaseCase = proof {
-    intros;
-    rewrite p;
-    trivial;
-}
--}
--}
