@@ -188,6 +188,7 @@ toIntNat n = toIntNat' n 0 where
 --------------------------------------------------------------------------------
 -- Type class instances
 --------------------------------------------------------------------------------
+eqNat : EqDict Nat
 eqNat = record { _===_ = _===_} where
   _===_ : Nat -> Nat -> Bool
   Z === Z         = True
@@ -196,10 +197,6 @@ eqNat = record { _===_ = _===_} where
 
 
 {- TODOinst
-instance Eq Nat where
-  Z == Z         = True
-  (S l) == (S r) = l == r
-  _ == _         = False
 
 instance Cast Nat Integer where
   cast = toIntegerNat

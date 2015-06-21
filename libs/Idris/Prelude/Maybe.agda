@@ -5,7 +5,7 @@ open import Idris.Builtins
 -- import Idris.Prelude.Basics
 open import Idris.Prelude.Bool
 -- import Idris.Prelude.Cast
--- import Idris.Prelude.Classes
+open import Idris.Prelude.Classes -- using (EqDict; EqDict')
 -- import Idris.Prelude.Foldable
 
 data Maybe (a : Type) : Type where
@@ -56,7 +56,7 @@ justInjective : {t : Type} ->
                 {x : t} -> {y : t} -> (Just x == Just y) -> (x == y)
 justInjective Refl = Refl
 
-{- TODO
+{- TODOclassdict
 -- ||| Convert a `Maybe a` value to an `a` value, using `neutral` in the case
 -- ||| that the `Maybe` value is `Nothing`.
 lowerMaybe : Monoid a => Maybe a -> a
@@ -78,12 +78,19 @@ maybe_bind : {a : Type} -> {b : Type} ->
 maybe_bind Nothing  k = Nothing
 maybe_bind (Just x) k = k x
 
-{- TODO: the rest of the file!
-instance (Eq a) => Eq (Maybe a) where
-  Nothing  == Nothing  = True
-  Nothing  == (Just _) = False
-  (Just _) == Nothing  = False
-  (Just a) == (Just b) = a == b
+-- instance (Eq a) => Eq (Maybe a) where
+
+eqMaybe : {a : Type} -> EqDict a -> EqDict' (Maybe a)
+eqMaybe eqa Nothing  Nothing  = True
+eqMaybe eqa Nothing  (Just _) = False
+eqMaybe eqa (Just _) Nothing  = False
+eqMaybe eqa (Just a) (Just b) = a === b
+  where open EqDict eqa
+
+eqDictMaybe : {a : Type} -> EqDict a -> EqDict (Maybe a)
+eqDictMaybe eqa = record {_===_ = eqMaybe eqa}
+
+{- TODOinst: the rest of the file!
 
 -- Lift a semigroup into 'Maybe' forming a 'Monoid' according to
 -- <http://en.wikipedia.org/wiki/Monoid>: "Any semigroup S may be
