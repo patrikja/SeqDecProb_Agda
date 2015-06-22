@@ -482,10 +482,10 @@ elemBy p e (x :: xs) =
     elemBy p e xs
 
 -- ||| Check if something is a member of a list using the default Boolean equality.
-{- TODO
-elem : Eq a => a -> List a -> Bool
-elem = elemBy (==)
--}
+
+elem : {a : Type} -> {{eqd : EqDict a}} -> a -> List a -> Bool
+elem {a} {{eqd}} = elemBy _===_
+  where open EqDict eqd
 
 -- ||| Find associated information in a list using a custom comparison.
 lookupBy : {a : Type} -> {b : Type} ->
@@ -498,10 +498,11 @@ lookupBy p e ((l , r) :: xs) =
       lookupBy p e xs
 
 -- ||| Find associated information in a list using Boolean equality.
-{- TODO
-lookup : Eq a => a -> List (a, b) -> Maybe b
-lookup = lookupBy (==)
--}
+
+lookup : {a b : Type} -> {{eqd : EqDict a}} -> a -> List (a × b) -> Maybe b
+lookup {a} {b} {{eqd}} = lookupBy _===_
+  where open EqDict eqd
+
 
 -- ||| Check if any elements of the first list are found in the second, using
 -- ||| a custom comparison.
@@ -517,10 +518,11 @@ hasAnyBy p elems (x :: xs) =
 
 -- ||| Check if any elements of the first list are found in the second, using
 -- ||| Boolean equality.
-{- TODO
-hasAny : Eq a => List a -> List a -> Bool
-hasAny = hasAnyBy (==)
--}
+
+hasAny : {a : Type} -> {{eqd : EqDict a}} -> List a -> List a -> Bool
+hasAny {a} {{eqd}} = hasAnyBy _===_
+  where open EqDict eqd
+
 
 --------------------------------------------------------------------------------
 -- Searching with a predicate
@@ -569,19 +571,21 @@ elemIndexBy : {a : Type} ->
               (a -> a -> Bool) -> a -> List a -> Maybe Nat
 elemIndexBy p e = findIndex (p e)
 
-{- TODO
-elemIndex : Eq a => a -> List a -> Maybe Nat
-elemIndex = elemIndexBy (==)
--}
+
+elemIndex : {a : Type} -> {{eqd : EqDict a}} -> a -> List a -> Maybe Nat
+elemIndex {a} {{eqd}} = elemIndexBy _===_
+  where open EqDict eqd
+
 
 elemIndicesBy : {a : Type} ->
                 (a -> a -> Bool) -> a -> List a -> List Nat
 elemIndicesBy p e = findIndices (p e)
 
-{- TODO
-elemIndices : Eq a => a -> List a -> List Nat
-elemIndices = elemIndicesBy (==)
--}
+
+elemIndices : {a : Type} -> {{eqd : EqDict a}} -> a -> List a -> List Nat
+elemIndices {a} {{eqd}} = elemIndicesBy _===_
+  where open EqDict eqd
+
 
 --------------------------------------------------------------------------------
 -- Filters
@@ -624,10 +628,11 @@ nubBy = nubBy' []
 -- ||| ```idris example
 -- ||| nub (the (List _) [1,2,1,3])
 -- ||| ```
-{- TODO
-nub : Eq a => List a -> List a
-nub = nubBy (==)
--}
+
+nub : {a : Type} -> {{eqd : EqDict a}} -> List a -> List a
+nub {a} {{eqd}} = nubBy _===_
+  where open EqDict eqd
+
 
 -- ||| The deleteBy function behaves like delete, but takes a user-supplied equality predicate.
 deleteBy : {a : Type} ->
@@ -644,12 +649,12 @@ deleteBy eq x (y :: ys) = if eq x y then ys else (y :: deleteBy eq x ys)
 -- |||
 -- ||| It is a special case of deleteBy, which allows the programmer to supply
 -- ||| their own equality test.
-{- TODO
-delete : (Eq a) => a -> List a -> List a
-delete = deleteBy (==)
--}
 
-{-
+delete : {a : Type} -> {{eqd : EqDict a}} -> a -> List a -> List a
+delete {a} {{eqd}} = deleteBy _===_
+  where open EqDict eqd
+
+
 -- ||| The `\\` function is list difference (non-associative). In the result of
 -- ||| `xs \\ ys`, the first occurrence of each element of ys in turn (if any) has
 -- ||| been removed from `xs`, e.g.,
@@ -657,9 +662,9 @@ delete = deleteBy (==)
 -- ||| ```idris example
 -- ||| (([1,2] ++ [2,3]) \\ [1,2])
 -- ||| ```
-(\\) : (Eq a) => List a -> List a -> List a
-(\\) =  foldl (flip delete)
--}
+_\\_ : {a : Type} -> {{eqd : EqDict a}} -> List a -> List a -> List a
+_\\_ =  foldl (flip delete)
+
 
 unionBy : {a : Type} ->
           (a -> a -> Bool) -> List a -> List a -> List a
@@ -671,10 +676,11 @@ unionBy eq xs ys =  xs ++ foldl (flip (deleteBy eq)) (nubBy eq ys) xs
 -- ||| union ['d', 'o', 'g'] ['c', 'o', 'w']
 -- ||| ```
 -- |||
-{- TODO
-union : (Eq a) => List a -> List a -> List a
-union = unionBy (==)
--}
+
+union : {a : Type} -> {{eqd : EqDict a}} -> List a -> List a -> List a
+union {a} {{eqd}} = unionBy _===_
+  where open EqDict eqd
+
 
 --------------------------------------------------------------------------------
 -- Splitting and breaking lists
