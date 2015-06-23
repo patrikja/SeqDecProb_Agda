@@ -88,48 +88,51 @@ eqPair _==a_ _==b_
 data Ordering : Type where
   LT EQ GT : Ordering
 
+-- instance Eq Ordering where
+eqOrdering : EqDict' Ordering
+eqOrdering LT LT = True
+eqOrdering EQ EQ = True
+eqOrdering GT GT = True
+eqOrdering _  _  = False
+
+eqOrdDict : EqDict Ordering
+eqOrdDict = record { _===_ = eqOrdering }
+
 OrdDict' : Type -> Type
 OrdDict' a = a -> a -> Ordering
 
--- OrdDict : Type -> Type
+-- ||| The Ord class defines comparison operations on ordered data types.
 record OrdDict (a : Type) : Type where
   field
     eqDict  : EqDict a
     compare : OrdDict' a
   open EqDict eqDict public
 
-{-
-instance Eq Ordering where
-    LT == LT = True
-    EQ == EQ = True
-    GT == GT = True
-    _  == _  = False
+  -- The rest of the record / module is helper functions
+  _<_ : a -> a -> Bool
+  x < y with (compare x y)
+  x < y | LT = True
+  x < y | _  = False
 
-||| The Ord class defines comparison operations on ordered data types.
-class Eq a => Ord a where
-    compare : a -> a -> Ordering
+  _>_ : a -> a -> Bool
+  x > y with (compare x y)
+  x > y | GT = True
+  x > y | _  = False
 
-    (<) : a -> a -> Bool
-    (<) x y with (compare x y)
-        (<) x y | LT = True
-        (<) x y | _  = False
+  _<=_ : a -> a -> Bool
+  x <= y = x < y || x === y
 
-    (>) : a -> a -> Bool
-    (>) x y with (compare x y)
-        (>) x y | GT = True
-        (>) x y | _  = False
+  _>=_ : a -> a -> Bool
+  x >= y = x > y || x === y
 
-    (<=) : a -> a -> Bool
-    (<=) x y = x < y || x == y
+  max : a -> a -> a
+  max x y = if (x > y) then x else y
 
-    (>=) : a -> a -> Bool
-    (>=) x y = x > y || x == y
+  min : a -> a -> a
+  min x y = if (x < y) then x else y
 
-    max : a -> a -> a
-    max x y = if (x > y) then x else y
 
-    min : a -> a -> a
-    min x y = if (x < y) then x else y
+{- TODO convert to dictionaries
 
 instance Ord () where
     compare () () = EQ

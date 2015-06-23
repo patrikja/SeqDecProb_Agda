@@ -854,26 +854,25 @@ isInfixOf n h = any (isPrefixOf n) (tails h)
 
 
 sorted : {a : Type} -> {{ordd : OrdDict a}} -> List a -> Bool
-sorted []        = True
-sorted (x :: []) = True
-sorted {{ordd}} (x :: x₁ :: xs) = {!x <= y && sorted (y::ys)!}
+sorted          []              = True
+sorted          (x :: [])       = True
+sorted {{ordd}} (x :: y :: ys)  = x <= y && sorted (y :: ys)
   where open OrdDict ordd
 
-{-
+
 mergeBy : {a : Type} ->
           (a -> a -> Ordering) -> List a -> List a -> List a
 mergeBy order []        right     = right
 mergeBy order left      []        = left
-mergeBy order (x :: xs) (y :: ys) =
-  if order x y == Ordering.LT
-     then x :: mergeBy order xs (y :: ys)
-     else y :: mergeBy order (x :: xs) ys
+mergeBy order (x :: xs) (y :: ys) with order x y
+... | Ordering.LT = x :: mergeBy order xs (y :: ys)
+... | _           = y :: mergeBy order (x :: xs) ys
 
-{- TODO
-merge : Ord a => List a -> List a -> List a
-merge = mergeBy compare
--}
+merge : {a : Type} -> {{ordd : OrdDict a}} -> List a -> List a -> List a
+merge {{ordd}} = mergeBy compare
+  where open OrdDict ordd
 
+{-
 {- TODO
 sort : Ord a => List a -> List a
 sort []    = []
