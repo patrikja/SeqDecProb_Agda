@@ -88,6 +88,16 @@ eqPair _==a_ _==b_
 data Ordering : Type where
   LT EQ GT : Ordering
 
+OrdDict' : Type -> Type
+OrdDict' a = a -> a -> Ordering
+
+-- OrdDict : Type -> Type
+record OrdDict (a : Type) : Type where
+  field
+    eqDict  : EqDict a
+    compare : OrdDict' a
+  open EqDict eqDict public
+
 {-
 instance Eq Ordering where
     LT == LT = True

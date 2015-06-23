@@ -247,15 +247,6 @@ instance (Eq a) => Eq (List a) where
   (==) = eqList (==)
 -}
 
-OrdDict' : Type -> Type
-OrdDict' a = a -> a -> Ordering
-
--- OrdDict : Type -> Type
-record OrdDict (a : Type) : Type where
-  field
-    eqDict  : EqDict a
-    compare : OrdDict' a
-  open EqDict eqDict public
 
 compareList : {a : Type} -> OrdDict a -> OrdDict' (List a)
 compareList orda [] [] = Ordering.EQ
@@ -762,19 +753,23 @@ inits : {a : Type} ->
 inits []         = [] :: []
 inits (x :: xs') = map (_::_ x) (inits xs')
 
-{-
+
 -- ||| The tails function returns all final segments of the argument, longest
 -- ||| first. For example,
 -- |||
 -- ||| ```idris example
 -- ||| tails [1,2,3] == [[1,2,3], [2,3], [3], []]
 -- |||```
-tails : {a : Type} ->
-        List a -> List (List a)
-tails xs = xs :: ? {- TODO
-case xs of
-  []        -> []
-  _ :: xs'  -> tails xs' -}
+mutual
+  tails : {a : Type} ->
+          List a -> List (List a)
+  tails xs = xs :: tailshelp xs
+
+  tailshelp : {a : Type} ->
+              List a -> List (List a)
+  tailshelp []          = []
+  tailshelp (_ :: xs')  = tails xs'
+
 
 -- ||| Split on the given element.
 -- |||
@@ -782,10 +777,12 @@ case xs of
 -- ||| splitOn 0 [1,0,2,0,0,3]
 -- ||| ```
 -- |||
-{- TODO
-splitOn : Eq a => a -> List a -> List (List a)
-splitOn a = split (== a)
+{- TODO termination for split (above)
+splitOn : {a : Type} -> {{eqd : EqDict a}} -> a -> List a -> List (List a)
+splitOn {{eqd}} a = split (_===_ a)
+  where open EqDict eqd
 -}
+
 
 -- ||| Replaces all occurences of the first argument with the second argument in a list.
 -- |||
@@ -793,10 +790,12 @@ splitOn a = split (== a)
 -- ||| replaceOn '-' ',' ['1', '-', '2', '-', '3']
 -- ||| ```
 -- |||
-{- TODO
-replaceOn : Eq a => a -> a -> List a -> List a
-replaceOn a b l = map (\c -> if c == a then b else c) l
--}
+
+replaceOn : {a : Type} -> {{eqd : EqDict a}} -> a -> a -> List a -> List a
+replaceOn {{eqd}} a b l = map (\c -> if c === a then b else c) l
+  where open EqDict eqd
+
+
 
 --------------------------------------------------------------------------------
 -- Predicates
@@ -812,21 +811,27 @@ isPrefixOfBy p (x :: xs) (y :: ys) =
   else
     False
 
+
 -- ||| The isPrefixOf function takes two lists and returns True iff the first list is a prefix of the second.
-{- TODO
-isPrefixOf : Eq a => List a -> List a -> Bool
-isPrefixOf = isPrefixOfBy (==)
--}
+
+isPrefixOf : {a : Type} -> {{eqd : EqDict a}} -> List a -> List a -> Bool
+isPrefixOf {{eqd}} = isPrefixOfBy _===_
+  where open EqDict eqd
+
+
 
 isSuffixOfBy : {a : Type} ->
                (a -> a -> Bool) -> List a -> List a -> Bool
 isSuffixOfBy p left right = isPrefixOfBy p (reverse left) (reverse right)
 
+
 -- ||| The isSuffixOf function takes two lists and returns True iff the first list is a suffix of the second.
-{- TODO
-isSuffixOf : Eq a => List a -> List a -> Bool
-isSuffixOf = isSuffixOfBy (==)
--}
+
+isSuffixOf : {a : Type} -> {{eqd : EqDict a}} -> List a -> List a -> Bool
+isSuffixOf {{eqd}} = isSuffixOfBy _===_
+  where open EqDict eqd
+
+
 
 -- ||| The isInfixOf function takes two lists and returns True iff the first list is contained, wholly and intact, anywhere within the second.
 -- |||
@@ -837,24 +842,24 @@ isSuffixOf = isSuffixOfBy (==)
 -- ||| isInfixOf ['b','d'] ['a', 'b', 'c', 'd']
 -- ||| ```
 -- |||
-{- TODO
-isInfixOf : Eq a => List a -> List a -> Bool
+{- TODO  missing Foldable.agda
+isInfixOf : {a : Type} -> {{eqd : EqDict a}} -> List a -> List a -> Bool
 isInfixOf n h = any (isPrefixOf n) (tails h)
 -}
+
 
 --------------------------------------------------------------------------------
 -- Sorting
 --------------------------------------------------------------------------------
 
-{- TODO
-sorted : Ord a => List a -> Bool
-sorted []      = True
-sorted (x::xs) =
-  case xs of
-    Nil     -> True
-    (y::ys) -> x <= y && sorted (y::ys)
--}
 
+sorted : {a : Type} -> {{ordd : OrdDict a}} -> List a -> Bool
+sorted []        = True
+sorted (x :: []) = True
+sorted {{ordd}} (x :: x₁ :: xs) = {!x <= y && sorted (y::ys)!}
+  where open OrdDict ordd
+
+{-
 mergeBy : {a : Type} ->
           (a -> a -> Ordering) -> List a -> List a -> List a
 mergeBy order []        right     = right
