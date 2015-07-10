@@ -242,12 +242,6 @@ eqList eqa (x :: xs) (y :: ys) = if x === y then eqList eqa xs ys else False
 eqDictList : {a : Type} -> EqDict a -> EqDict (List a)
 eqDictList eqa = record {_===_ = eqList eqa}
 
-{- TODO
-instance (Eq a) => Eq (List a) where
-  (==) = eqList (==)
--}
-
-
 compareList : {a : Type} -> OrdDict a -> OrdDict' (List a)
 compareList orda [] [] = Ordering.EQ
 compareList orda [] _ = Ordering.LT
@@ -872,21 +866,19 @@ merge : {a : Type} -> {{ordd : OrdDict a}} -> List a -> List a -> List a
 merge {{ordd}} = mergeBy compare
   where open OrdDict ordd
 
-{-
-{- TODO
-sort : Ord a => List a -> List a
-sort []    = []
-sort [ x ] = [ x ]
-sort xs    = let (x , y) = split xs in
-    merge (sort (assert_smaller xs x))
-          (sort (assert_smaller xs y)) -- not structurally smaller, hence assert
+
+{-# NO_TERMINATION_CHECK #-}
+sort : {a : Type} -> {{ordd : OrdDict a}} -> List a -> List a
+sort []         = []
+sort (x :: [])  = x :: []
+sort {a} xs     = let (x , y) = split xs in merge (sort x) (sort y)
   where
-    s = splitRec xs ys (zs . (flip _::_ y))
-    splitRec _          ys      zs = (zs [] , ys)
+    splitRec : List a -> List a -> (List a -> List a) -> (List a × List a)
+    splitRec (_ :: _ :: xs) (y :: ys) zs = splitRec xs ys (zs ∘ (_::_ y))
+    splitRec  _              ys       zs = (zs [] , ys)
 
     split : List a -> (List a × List a)
     split xs = splitRec xs xs id
--}
 
 --------------------------------------------------------------------------------
 -- Conversions
@@ -905,12 +897,8 @@ listToMaybe (x :: xs) = Just x
 catMaybes : {a : Type} ->
             List (Maybe a) -> List a
 catMaybes []      = []
-catMaybes (x::xs) = ? -- TODO
-{-
-  case x of
-    Nothing -> catMaybes xs
-    Just j  -> j :: catMaybes xs
--}
+catMaybes (Nothing :: xs) =      catMaybes xs
+catMaybes (Just j  :: xs) = j :: catMaybes xs
 
 --------------------------------------------------------------------------------
 -- Properties
@@ -923,7 +911,7 @@ appendNilRightNeutral : {a : Type} ->
 appendNilRightNeutral []        = Refl
 appendNilRightNeutral (x :: xs) =
   let inductiveHypothesis = appendNilRightNeutral xs in
-    {! ?appendNilRightNeutralStepCase !}
+    cong (_::_ x) inductiveHypothesis
 
 -- ||| Appending lists is associative.
 appendAssociative : {a : Type} ->
@@ -932,7 +920,7 @@ appendAssociative : {a : Type} ->
 appendAssociative []        c r = Refl
 appendAssociative (x :: xs) c r =
   let inductiveHypothesis = appendAssociative xs c r in
-    {! ?appendAssociativeStepCase !}
+    cong (_::_ x) inductiveHypothesis
 
 -- ||| The length of two lists that are appended is the sum of the lengths
 -- ||| of the input lists.
@@ -942,7 +930,7 @@ lengthAppend : {a : Type} ->
 lengthAppend []        right = Refl
 lengthAppend (x :: xs) right =
   let inductiveHypothesis = lengthAppend xs right in
-    {! ?lengthAppendStepCase !}
+    cong S inductiveHypothesis
 
 -- ||| Mapping a function over a list doesn't change its length.
 mapPreservesLength : {a : Type} -> {b : Type} ->
@@ -951,7 +939,7 @@ mapPreservesLength : {a : Type} -> {b : Type} ->
 mapPreservesLength f []        = Refl
 mapPreservesLength f (x :: xs) =
   let inductiveHypothesis = mapPreservesLength f xs in
-    {! ?mapPreservesLengthStepCase !}
+    cong (_+_ 1) inductiveHypothesis
 
 -- ||| Mapping a function over two lists and appending them is equivalent
 -- ||| to appending them and then mapping the function.
@@ -961,7 +949,7 @@ mapDistributesOverAppend : {a : Type} -> {b : Type} ->
 mapDistributesOverAppend f []        r = Refl
 mapDistributesOverAppend f (x :: xs) r =
   let inductiveHypothesis = mapDistributesOverAppend f xs r in
-    {! ?mapDistributesOverAppendStepCase !}
+    cong (_::_ (f x)) inductiveHypothesis
 
 -- ||| Mapping two functions is the same as mapping their composition.
 mapFusion : {a : Type} -> {b : Type} -> {c : Type} ->
@@ -970,103 +958,26 @@ mapFusion : {a : Type} -> {b : Type} -> {c : Type} ->
 mapFusion f g []        = Refl
 mapFusion f g (x :: xs) =
   let inductiveHypothesis = mapFusion f g xs in
-    {! ?mapFusionStepCase !}
+    cong (_::_ (f (g x))) inductiveHypothesis
 
 -- ||| No list contains an element of the empty list by any predicate.
 hasAnyByNilFalse : {a : Type} ->
                    (p : a -> a -> Bool) -> (l : List a) ->
   hasAnyBy p [] l == False
 hasAnyByNilFalse p []        = Refl
-hasAnyByNilFalse p (x :: xs) =
-  let inductiveHypothesis = hasAnyByNilFalse p xs in
-    {! ?hasAnyByNilFalseStepCase !}
+hasAnyByNilFalse p (x :: xs) = hasAnyByNilFalse p xs
 
-{- TODO
+
 -- ||| No list contains an element of the empty list.
-hasAnyNilFalse : Eq a => (l : List a) -> hasAny [] l = False
-hasAnyNilFalse l = ?hasAnyNilFalseBody
+hasAnyNilFalse : {a : Type} -> {{eqd : EqDict a}} -> (l : List a) -> hasAny [] l == False
+hasAnyNilFalse []        = Refl
+hasAnyNilFalse (x :: xs) = hasAnyNilFalse xs
 
+{- TODOinst
 instance VerifiedSemigroup (List a) where
   semigroupOpIsAssociative = appendAssociative
 
 instance VerifiedMonoid (List a) where
   monoidNeutralIsNeutralL = appendNilRightNeutral
   monoidNeutralIsNeutralR xs = Refl
-
---------------------------------------------------------------------------------
--- Proofs
---------------------------------------------------------------------------------
-
-indexTailProof = proof {
-  intros;
-  rewrite sym p;
-  trivial;
-}
-
-lengthAppendStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-hasAnyNilFalseBody = proof {
-    intros;
-    rewrite (hasAnyByNilFalse (==) l);
-    trivial;
-}
-
-hasAnyByNilFalseStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-appendNilRightNeutralStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-appendAssociativeStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-mapFusionStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-mapDistributesOverAppendStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-mapPreservesLengthStepCase = proof {
-    intros;
-    rewrite inductiveHypothesis;
-    trivial;
-}
-
-zipWithTailProof = proof {
-    intros;
-    rewrite (succInjective (length xs) (length ys) p);
-    trivial;
-}
-
-zipWith3TailProof = proof {
-    intros;
-    rewrite (succInjective (length xs) (length ys) p);
-    trivial;
-}
-
-zipWith3TailProof' = proof {
-    intros;
-    rewrite (succInjective (length ys) (length zs) q);
-    trivial;
-}
--}
 -}
