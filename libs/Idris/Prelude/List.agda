@@ -257,7 +257,7 @@ ordDictList orda = record {eqDict = eqDictList eqDict; compare = compareList ord
 
 -- instance Ord a => Ord (List a) where
 
-{- TODO
+{- TODOinst
 instance Semigroup (List a) where
   (<+>) = (++)
 
@@ -265,8 +265,7 @@ instance Monoid (List a) where
   neutral = []
 
 instance Functor List where
-  map f []      = []
-  map f (x::xs) = f x :: map f xs
+
 -}
 
 map : {a : Type} -> {b : Type} ->

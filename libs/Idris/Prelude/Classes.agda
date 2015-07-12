@@ -49,7 +49,7 @@ eqUnit unit unit = True
 eqDictUnit : EqDict Unit
 eqDictUnit = record { _===_ = eqUnit }
 
-{- TODO
+{- TODOinst
 instance Eq Int where
     (==) = boolOp prim__eqInt
 
@@ -132,10 +132,13 @@ record OrdDict (a : Type) : Type where
   min x y = if (x < y) then x else y
 
 
-{- TODO convert to dictionaries
+-- instance Ord ()
+compareUnit : OrdDict' Unit
+compareUnit unit unit = EQ
+ordDictUnit : OrdDict Unit
+ordDictUnit = record { eqDict = eqDictUnit; compare = compareUnit }
 
-instance Ord () where
-    compare () () = EQ
+{- TODOinst convert to dictionaries
 
 instance Ord Int where
     compare x y = if (x == y) then EQ else
@@ -165,14 +168,19 @@ instance Ord String where
     compare x y = if (x == y) then EQ else
                   if (boolOp prim__ltString x y) then LT else
                   GT
+-}
 
+-- instance Ord Bool
+compareBool : OrdDict' Bool
+compareBool True  True  = EQ
+compareBool False False = EQ
+compareBool False True  = LT
+compareBool True  False = GT
 
-instance Ord Bool where
-    compare True True = EQ
-    compare False False = EQ
-    compare False True = LT
-    compare True False = GT
+ordDictBool : OrdDict Bool
+ordDictBool = record { eqDict = eqDictBool ; compare = compareBool }
 
+{-
 
 instance (Ord a, Ord b) => Ord (a, b) where
   compare (xl, xr) (yl, yr) =
