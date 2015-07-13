@@ -62,12 +62,12 @@ cong f Refl = Refl
 -- See ../Syntax/PreorderReasoning.agda
 
 -- ||| Decidability. A decidable property either holds or is a contradiction.
-data Dec : Type -> Set1 where
+data Dec (A : Type) : Set where
 
   -- ||| The case where the property holds
   -- ||| @ prf the proof
-  Yes : {A : Type} -> (prf : A) -> Dec A
+  Yes : (prf : A) -> Dec A
 
   -- ||| The case where the property holding would be a contradiction
   -- ||| @ contra a demonstration that A would be a contradiction
-  No  : {A : Type} -> (contra : A -> Void) -> Dec A
+  No  : (contra : A -> Void) -> Dec A
