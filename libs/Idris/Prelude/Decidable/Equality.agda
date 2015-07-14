@@ -6,8 +6,8 @@ open import Idris.Prelude.Bool
 -- import Prelude.Classes
 -- import Prelude.Either
 -- import Prelude.List
--- import Prelude.Nat
--- import Prelude.Maybe
+open import Idris.Prelude.Nat
+open import Idris.Prelude.Maybe
 
 --------------------------------------------------------------------------------
 -- Utility lemmas
@@ -34,54 +34,59 @@ record DecEqDict (a : Type) : Type where
 --- Unit
 --------------------------------------------------------------------------------
 
+decEqUnit : DecEqDict' Unit
+decEqUnit unit unit = Yes Refl
 
-{- TODOinst
-instance DecEq () where
-  decEq () () = Yes Refl
-
+decEqDictUnit : DecEqDict Unit
+decEqDictUnit = record { decEq = decEqUnit }
 
 --------------------------------------------------------------------------------
 -- Booleans
 --------------------------------------------------------------------------------
-total trueNotFalse : True = False -> Void
-trueNotFalse Refl impossible
+trueNotFalse : True == False -> Void
+trueNotFalse ()
 
-instance DecEq Bool where
-  decEq True  True  = Yes Refl
-  decEq False False = Yes Refl
-  decEq True  False = No trueNotFalse
-  decEq False True  = No (negEqSym trueNotFalse)
+-- instance DecEq Bool where
+
+decEqBool : DecEqDict' Bool
+decEqBool True  True  = Yes Refl
+decEqBool False False = Yes Refl
+decEqBool True  False = No trueNotFalse
+decEqBool False True  = No (negEqSym trueNotFalse)
 
 --------------------------------------------------------------------------------
 -- Nat
 --------------------------------------------------------------------------------
 
-total ZnotS : Z = S n -> Void
-ZnotS Refl impossible
+ZnotS : {n : Nat} ->
+        Z == S n -> Void
+ZnotS ()
 
-instance DecEq Nat where
-  decEq Z     Z     = Yes Refl
-  decEq Z     (S _) = No ZnotS
-  decEq (S _) Z     = No (negEqSym ZnotS)
-  decEq (S n) (S m) with (decEq n m)
-    | Yes p = Yes $ cong p
-    | No p = No $ \h : (S n = S m) => p $ succInjective n m h
+
+-- instance DecEq Nat where
+-- decEqNat already defined in Idris.Prelude.Nat
 
 --------------------------------------------------------------------------------
 -- Maybe
 --------------------------------------------------------------------------------
 
-total nothingNotJust : {x : t} -> (Nothing {a = t} = Just x) -> Void
-nothingNotJust Refl impossible
+nothingNotJust : {t : Type} ->
+                 {x : t} -> (Nothing {a = t} == Just x) -> Void
+nothingNotJust ()
 
-instance (DecEq t) => DecEq (Maybe t) where
-  decEq Nothing Nothing = Yes Refl
-  decEq (Just x') (Just y') with (decEq x' y')
-    | Yes p = Yes $ cong p
-    | No p = No $ \h : Just x' = Just y' => p $ justInjective h
-  decEq Nothing (Just _) = No nothingNotJust
-  decEq (Just _) Nothing = No (negEqSym nothingNotJust)
+-- instance (DecEq t) => DecEq (Maybe t) where
+decEqMaybe : {a : Type} -> DecEqDict a -> DecEqDict' (Maybe a)
+decEqMaybe _ Nothing Nothing = Yes Refl
+decEqMaybe da (Just x') (Just y') with (DecEqDict.decEq da x' y')
+... | Yes p  = Yes (cong Just p)
+... | No  p  = No (\h -> p (justInjective h))
+decEqMaybe _ Nothing (Just _) = No nothingNotJust
+decEqMaybe _ (Just _) Nothing = No (negEqSym nothingNotJust)
 
+decEqDictMaybe : {a : Type} -> DecEqDict a -> DecEqDict (Maybe a)
+decEqDictMaybe da = record { decEq = decEqMaybe da }
+
+{- TODO rest of the file
 --------------------------------------------------------------------------------
 -- Either
 --------------------------------------------------------------------------------
