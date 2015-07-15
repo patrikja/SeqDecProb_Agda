@@ -4,7 +4,7 @@ open import Idris.Builtins
 open import Idris.Prelude.Basics
 open import Idris.Prelude.Bool
 -- import Prelude.Classes
--- import Prelude.Either
+open import Idris.Prelude.Either
 -- import Prelude.List
 open import Idris.Prelude.Nat
 open import Idris.Prelude.Maybe
@@ -86,31 +86,71 @@ decEqMaybe _ (Just _) Nothing = No (negEqSym nothingNotJust)
 decEqDictMaybe : {a : Type} -> DecEqDict a -> DecEqDict (Maybe a)
 decEqDictMaybe da = record { decEq = decEqMaybe da }
 
-{- TODO rest of the file
+
 --------------------------------------------------------------------------------
 -- Either
 --------------------------------------------------------------------------------
 
-total leftNotRight : {x : a} -> {y : b} -> Left {b = b} x = Right {a = a} y -> Void
-leftNotRight Refl impossible
+leftNotRight : {a : Type} -> {b : Type} ->
+               {x : a} -> {y : b} -> Left {b = b} x == Right {a = a} y -> Void
+leftNotRight ()
 
-instance (DecEq a, DecEq b) => DecEq (Either a b) where
-  decEq (Left x') (Left y') with (decEq x' y')
-    | Yes p = Yes $ cong p
-    | No p = No $ \h : Left x' = Left y' => p $ leftInjective {b = b} h
-  decEq (Right x') (Right y') with (decEq x' y')
-    | Yes p = Yes $ cong p
-    | No p = No $ \h : Right x' = Right y' => p $ rightInjective {a = a} h
-  decEq (Left x') (Right y') = No leftNotRight
-  decEq (Right x') (Left y') = No $ negEqSym leftNotRight
+
+-- instance (DecEq a, DecEq b) => DecEq (Either a b) where
+decEqEither : {a : Type} -> {b : Type} ->
+              DecEqDict a -> DecEqDict b -> DecEqDict' (Either a b)
+decEqEither da db (Left x') (Left y') with (DecEqDict.decEq da x' y')
+... | Yes p = Yes (cong Left p)
+... | No p = No (\h -> p (leftInjective h))
+decEqEither da db (Right x') (Right y') with (DecEqDict.decEq db x' y')
+... | Yes p = Yes (cong Right p)
+... | No p = No (\h -> p (rightInjective h))
+decEqEither da db (Left x') (Right y') = No leftNotRight
+decEqEither da db (Right x') (Left y') = No (negEqSym leftNotRight)
+
 
 --------------------------------------------------------------------------------
 -- Tuple
 --------------------------------------------------------------------------------
 
-lemma_both_neq : {x : a, y : b, x' : c, y' : d} -> (x = x' -> Void) -> (y = y' -> Void) -> ((x, y) = (x', y') -> Void)
-lemma_both_neq p_x_not_x' p_y_not_y' Refl = p_x_not_x' Refl
+{- TODO: Cleanup this intermediate code and replace with proper solution;-)
+helper1 : {a : Type} -> {b : Type} -> (x : a) -> (y : b) -> (x == y) -> (a == b)
+helper1 x .x Refl = Refl
 
+helper2 :  {a b a' b' : Type} ->
+           (a × b) == (a' × b') ->
+           (a == b)
+helper2 q = {!q!}
+
+-- hcong' {!!} {!!} {!\ ab -> fst {fst ab} {snd ab}!} q
+-- fst (x , y) == fst (x' , y')
+-- fst {.a} {.b} (x  , y )  ==  fst {.c} {.d} (x' , y')
+-- fst : {a b : Set} -> a × b -> a
+mycong : (Q : Set -> Set -> Set) ->
+         (f : {a b : Set} -> a × b -> Q a b) ->
+         {a b c d : Type} ->
+--         {x : a} {y : b} {x' : c} {y' : d} ->
+--         (p : (x , y) == (x' , y')) -> (f {a} {b} (x , y) == f {c} {d} (x' , y'))
+         {xy : a × b} {xy' : c × d} ->
+         (p : xy == xy') -> (f {a} {b} xy == f {c} {d} xy')
+mycong Q f p = {!p!}
+-}
+
+lemmaFstEq :  {a b c d : Type} ->
+                 {x : a} {y : b} {x' : c} {y' : d} ->
+                 (x , y) == (x' , y')   ->  (x == x') -- × (y == y')
+lemmaFstEq {a} {b} {c} {d} {x} {y} {x'} {y'} q =
+                x                      ==< Refl >==
+                fst {a} {b} (x  , y )  ==< {!cong fst q!} >==   -- TODO: this is not quite type correct
+                fst {c} {d} (x' , y')  ==< Refl >==
+                x' QED
+
+lemma_both_neq : {a b c d : Type} ->
+                 {x : a} {y : b} {x' : c} {y' : d} ->
+                 (x == x' -> Void) -> (y == y' -> Void) -> ((x , y) == (x' , y') -> Void)
+lemma_both_neq p_x_not_x' p_y_not_y' q = p_x_not_x' (lemmaFstEq q)
+
+{- TODO rest of the file
 lemma_snd_neq : {x : a, y : b, y' : d} -> (x = x) -> (y = y' -> Void) -> ((x, y) = (x, y') -> Void)
 lemma_snd_neq Refl p Refl = p Refl
 
