@@ -150,17 +150,29 @@ lemma_both_neq : {a b c d : Type} ->
                  (x == x' -> Void) -> (y == y' -> Void) -> ((x , y) == (x' , y') -> Void)
 lemma_both_neq p_x_not_x' p_y_not_y' q = p_x_not_x' (lemmaFstEq q)
 
+
+lemma_snd_neq : {a b c d : Type } ->
+                {x : a} -> {y : b} -> {y' : d} -> (x == x) -> (y == y' -> Void) -> ((x , y) == (x , y') -> Void)
+lemma_snd_neq Refl p q = p {!!}
+
+lemma_fst_neq_snd_eq : {a b c d : Type } ->
+                       {x : a} -> {x' : b} -> {y : c} -> {y' : d} ->
+                       (x == x' -> Void) ->
+                       (y == y') ->
+                       ((x , y) == (x' , y) -> Void)
+lemma_fst_neq_snd_eq p_x_not_x' Refl q = p_x_not_x' {!!}
+
+
+-- instance (DecEq a, DecEq b) => DecEq (a, b) where
+decEqPair : {a : Type} -> {b : Type} ->
+            DecEqDict a -> DecEqDict b -> DecEqDict' (a × b)
+decEqPair da db (xa , xb) (ya , yb) with DecEqDict.decEq da xa ya | DecEqDict.decEq db xb yb
+... | Yes prfa    | Yes prfb    = Yes (cong2 _,_ prfa prfb)
+... | Yes prfa    | No contraa  = No {!!}
+... | No contraa  | Yes prfb    = No {!!}
+... | No contraa  | No contrab  = No {!!}
+
 {- TODO rest of the file
-lemma_snd_neq : {x : a, y : b, y' : d} -> (x = x) -> (y = y' -> Void) -> ((x, y) = (x, y') -> Void)
-lemma_snd_neq Refl p Refl = p Refl
-
-lemma_fst_neq_snd_eq : {x : a, x' : b, y : c, y' : d} ->
-                       (x = x' -> Void) ->
-                       (y = y') ->
-                       ((x, y) = (x', y) -> Void)
-lemma_fst_neq_snd_eq p_x_not_x' Refl Refl = p_x_not_x' Refl
-
-instance (DecEq a, DecEq b) => DecEq (a, b) where
   decEq (a, b) (a', b')     with (decEq a a')
     decEq (a, b) (a, b')    | (Yes Refl) with (decEq b b')
       decEq (a, b) (a, b)   | (Yes Refl) | (Yes Refl) = Yes Refl
