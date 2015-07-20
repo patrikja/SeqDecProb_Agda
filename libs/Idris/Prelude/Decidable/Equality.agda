@@ -5,7 +5,7 @@ open import Idris.Prelude.Basics
 open import Idris.Prelude.Bool
 -- import Prelude.Classes
 open import Idris.Prelude.Either
--- import Prelude.List
+open import Idris.Prelude.List
 open import Idris.Prelude.Nat
 open import Idris.Prelude.Maybe
 
@@ -108,7 +108,9 @@ decEqEither da db (Right x') (Right y') with (DecEqDict.decEq db x' y')
 decEqEither da db (Left x') (Right y') = No leftNotRight
 decEqEither da db (Right x') (Left y') = No (negEqSym leftNotRight)
 
-
+decEqDictEither : {a : Type} -> {b : Type} ->
+                  DecEqDict a -> DecEqDict b -> DecEqDict (Either a b)
+decEqDictEither da db = record { decEq = decEqEither da db }
 --------------------------------------------------------------------------------
 -- Tuple
 --------------------------------------------------------------------------------
@@ -128,36 +130,49 @@ decEqPair da db (xa , xb) (ya , yb) with DecEqDict.decEq da xa ya | DecEqDict.de
 ... | Yes prfa    | No contrab  = No (lemmaEitherNoNo (Right contrab))
 ... | No contraa  | _           = No (lemmaEitherNoNo (Left  contraa))
 
-{- TODO rest of the file
+decEqDictPair : {a : Type} -> {b : Type} ->
+                DecEqDict a -> DecEqDict b -> DecEqDict (a × b)
+decEqDictPair da db = record { decEq = decEqPair da db }
+
 
 --------------------------------------------------------------------------------
 -- List
 --------------------------------------------------------------------------------
 
-lemma_val_not_nil : {x : t, xs : List t} -> ((x :: xs) = Prelude.List.Nil {a = t} -> Void)
-lemma_val_not_nil Refl impossible
-
-lemma_x_eq_xs_neq : {x : t, xs : List t, y : t, ys : List t} -> (x = y) -> (xs = ys -> Void) -> ((x :: xs) = (y :: ys) -> Void)
+lemma_x_eq_xs_neq : {t : Type} -> {x : t} -> {xs : List t} -> {y : t} -> {ys : List t} -> (x == y) -> (xs == ys -> Void) -> ((x :: xs) == (y :: ys) -> Void)
 lemma_x_eq_xs_neq Refl p Refl = p Refl
 
-lemma_x_neq_xs_eq : {x : t, xs : List t, y : t, ys : List t} -> (x = y -> Void) -> (xs = ys) -> ((x :: xs) = (y :: ys) -> Void)
+
+lemma_x_neq_xs_eq : {t : Type} -> {x : t} -> {xs : List t} -> {y : t} -> {ys : List t} -> (x == y -> Void) -> (xs == ys) -> ((x :: xs) == (y :: ys) -> Void)
 lemma_x_neq_xs_eq p Refl Refl = p Refl
 
-lemma_x_neq_xs_neq : {x : t, xs : List t, y : t, ys : List t} -> (x = y -> Void) -> (xs = ys -> Void) -> ((x :: xs) = (y :: ys) -> Void)
+
+lemma_x_neq_xs_neq : {t : Type} -> {x : t} -> {xs : List t} -> {y : t} -> {ys : List t} -> (x == y -> Void) -> (xs == ys -> Void) -> ((x :: xs) == (y :: ys) -> Void)
 lemma_x_neq_xs_neq p p' Refl = p Refl
 
-instance DecEq a => DecEq (List a) where
-  decEq [] [] = Yes Refl
-  decEq (x :: xs) [] = No lemma_val_not_nil
-  decEq [] (x :: xs) = No (negEqSym lemma_val_not_nil)
-  decEq (x :: xs) (y :: ys) with (decEq x y)
-    decEq (x :: xs) (x :: ys) | Yes Refl with (decEq xs ys)
-      decEq (x :: xs) (x :: xs) | (Yes Refl) | (Yes Refl) = Yes Refl
-      decEq (x :: xs) (x :: ys) | (Yes Refl) | (No p) = No (\eq => lemma_x_eq_xs_neq Refl p eq)
-    decEq (x :: xs) (y :: ys) | No p with (decEq xs ys)
-      decEq (x :: xs) (y :: xs) | (No p) | (Yes Refl) = No (\eq => lemma_x_neq_xs_eq p Refl eq)
-      decEq (x :: xs) (y :: ys) | (No p) | (No p') = No (\eq => lemma_x_neq_xs_neq p p' eq)
 
+lemmaEitherNoNoList :  {a : Type} ->
+             {xa ya : a} -> {xb yb : List a} ->
+             Either (xa == ya → Void) (xb == yb → Void) ->
+             (xa :: xb) == (ya :: yb) → Void
+lemmaEitherNoNoList (Left  na) Refl = na Refl
+lemmaEitherNoNoList (Right nb) Refl = nb Refl
+
+
+-- instance DecEq a => DecEq (List a) where
+decEqList : {a : Type} -> DecEqDict a -> DecEqDict' (List a)
+decEqList da [] [] = Yes Refl
+decEqList da [] (x :: ys) = No (λ ())
+decEqList da (x :: xs) [] = No (λ ())
+decEqList da (x :: xs) (y :: ys) with DecEqDict.decEq da x y | decEqList da xs ys
+decEqList da (x :: xs) (.x :: .xs)  | Yes Refl   | Yes Refl   = Yes Refl
+decEqList da (x :: xs) (.x :: ys)   | Yes Refl   | No contra  = No (lemmaEitherNoNoList (Right contra))
+decEqList da (x :: xs) (y :: ys)    | No contra  | q          = No (lemmaEitherNoNoList (Left contra))
+
+decEqDictList : {a : Type} -> DecEqDict a -> DecEqDict (List a)
+decEqDictList da = record { decEq = decEqList da }
+
+{- TODO rest of the file
 
 -- For the primitives, we have to cheat because we don't have access to their
 -- internal implementations.
