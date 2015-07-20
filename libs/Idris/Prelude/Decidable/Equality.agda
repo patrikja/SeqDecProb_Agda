@@ -113,74 +113,22 @@ decEqEither da db (Right x') (Left y') = No (negEqSym leftNotRight)
 -- Tuple
 --------------------------------------------------------------------------------
 
-{- TODO: Cleanup this intermediate code and replace with proper solution;-)
-helper1 : {a : Type} -> {b : Type} -> (x : a) -> (y : b) -> (x == y) -> (a == b)
-helper1 x .x Refl = Refl
-
-helper2 :  {a b a' b' : Type} ->
-           (a × b) == (a' × b') ->
-           (a == b)
-helper2 q = {!q!}
-
--- hcong' {!!} {!!} {!\ ab -> fst {fst ab} {snd ab}!} q
--- fst (x , y) == fst (x' , y')
--- fst {.a} {.b} (x  , y )  ==  fst {.c} {.d} (x' , y')
--- fst : {a b : Set} -> a × b -> a
-mycong : (Q : Set -> Set -> Set) ->
-         (f : {a b : Set} -> a × b -> Q a b) ->
-         {a b c d : Type} ->
---         {x : a} {y : b} {x' : c} {y' : d} ->
---         (p : (x , y) == (x' , y')) -> (f {a} {b} (x , y) == f {c} {d} (x' , y'))
-         {xy : a × b} {xy' : c × d} ->
-         (p : xy == xy') -> (f {a} {b} xy == f {c} {d} xy')
-mycong Q f p = {!p!}
--}
-
-lemmaFstEq :  {a b c d : Type} ->
-                 {x : a} {y : b} {x' : c} {y' : d} ->
-                 (x , y) == (x' , y')   ->  (x == x') -- × (y == y')
-lemmaFstEq {a} {b} {c} {d} {x} {y} {x'} {y'} q =
-                x                      ==< Refl >==
-                fst {a} {b} (x  , y )  ==< {!cong fst q!} >==   -- TODO: this is not quite type correct
-                fst {c} {d} (x' , y')  ==< Refl >==
-                x' QED
-
-lemma_both_neq : {a b c d : Type} ->
-                 {x : a} {y : b} {x' : c} {y' : d} ->
-                 (x == x' -> Void) -> (y == y' -> Void) -> ((x , y) == (x' , y') -> Void)
-lemma_both_neq p_x_not_x' p_y_not_y' q = p_x_not_x' (lemmaFstEq q)
-
-
-lemma_snd_neq : {a b c d : Type } ->
-                {x : a} -> {y : b} -> {y' : d} -> (x == x) -> (y == y' -> Void) -> ((x , y) == (x , y') -> Void)
-lemma_snd_neq Refl p q = p {!!}
-
-lemma_fst_neq_snd_eq : {a b c d : Type } ->
-                       {x : a} -> {x' : b} -> {y : c} -> {y' : d} ->
-                       (x == x' -> Void) ->
-                       (y == y') ->
-                       ((x , y) == (x' , y) -> Void)
-lemma_fst_neq_snd_eq p_x_not_x' Refl q = p_x_not_x' {!!}
-
+lemmaEitherNoNo :  {a b : Type} ->
+             {xa ya : a} -> {xb yb : b} ->
+             Either (xa == ya → Void) (xb == yb → Void) ->
+             (xa , xb) == (ya , yb) → Void
+lemmaEitherNoNo (Left  na) Refl = na Refl
+lemmaEitherNoNo (Right nb) Refl = nb Refl
 
 -- instance (DecEq a, DecEq b) => DecEq (a, b) where
 decEqPair : {a : Type} -> {b : Type} ->
             DecEqDict a -> DecEqDict b -> DecEqDict' (a × b)
 decEqPair da db (xa , xb) (ya , yb) with DecEqDict.decEq da xa ya | DecEqDict.decEq db xb yb
 ... | Yes prfa    | Yes prfb    = Yes (cong2 _,_ prfa prfb)
-... | Yes prfa    | No contraa  = No {!!}
-... | No contraa  | Yes prfb    = No {!!}
-... | No contraa  | No contrab  = No {!!}
+... | Yes prfa    | No contrab  = No (lemmaEitherNoNo (Right contrab))
+... | No contraa  | _           = No (lemmaEitherNoNo (Left  contraa))
 
 {- TODO rest of the file
-  decEq (a, b) (a', b')     with (decEq a a')
-    decEq (a, b) (a, b')    | (Yes Refl) with (decEq b b')
-      decEq (a, b) (a, b)   | (Yes Refl) | (Yes Refl) = Yes Refl
-      decEq (a, b) (a, b')  | (Yes Refl) | (No p) = No (\eq => lemma_snd_neq Refl p eq)
-    decEq (a, b) (a', b')   | (No p)     with (decEq b b')
-      decEq (a, b) (a', b)  | (No p)     | (Yes Refl) =  No (\eq => lemma_fst_neq_snd_eq p Refl eq)
-      decEq (a, b) (a', b') | (No p)     | (No p') = No (\eq => lemma_both_neq p p' eq)
-
 
 --------------------------------------------------------------------------------
 -- List
