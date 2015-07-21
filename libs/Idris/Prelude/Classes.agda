@@ -49,10 +49,17 @@ eqUnit unit unit = True
 eqDictUnit : EqDict Unit
 eqDictUnit = record { _===_ = eqUnit }
 
-{- TODOinst
-instance Eq Int where
-    (==) = boolOp prim__eqInt
+primitive
+  primIntegerEquality : Int -> Int -> Bool
 
+-- instance Eq Int where
+eqInt : EqDict' Int
+eqInt = primIntegerEquality
+
+eqDictInt : EqDict Int
+eqDictInt = record { _===_ = eqInt }
+
+{- TODOinst
 instance Eq Integer where
     (==) = boolOp prim__eqBigInt
 

@@ -34,3 +34,15 @@ data _==_  {l} {a : Set l} (x : a) : {b : Set l} -> (y : b) -> Set where
   Refl : x == x
 
 infix 4 _==_
+
+postulate
+  Int    : Type
+  Float  : Type
+  Char   : Type
+  String : Type
+
+-- Bind the built-in types using the BUILTIN pragma.
+{-# BUILTIN INTEGER Int    #-}
+{-# BUILTIN FLOAT   Float  #-}
+{-# BUILTIN CHAR    Char   #-}
+{-# BUILTIN STRING  String #-}

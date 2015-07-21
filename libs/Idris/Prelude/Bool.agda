@@ -9,6 +9,11 @@ data Bool : Type where
   False : Bool
   True  : Bool
 
+-- Connect the Bool type and the builtins
+{-# BUILTIN BOOL  Bool  #-}
+{-# BUILTIN TRUE  True  #-}
+{-# BUILTIN FALSE False #-}
+
 -- ||| The underlying implementation of the if ... then ... else ... syntax
 -- ||| @ b the condition on the if
 -- ||| @ t the value if b is true

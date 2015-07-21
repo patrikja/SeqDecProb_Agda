@@ -3,7 +3,7 @@ module Idris.Prelude.Decidable.Equality where
 open import Idris.Builtins
 open import Idris.Prelude.Basics
 open import Idris.Prelude.Bool
--- import Prelude.Classes
+open import Idris.Prelude.Classes
 open import Idris.Prelude.Either
 open import Idris.Prelude.List
 open import Idris.Prelude.Nat
@@ -172,8 +172,6 @@ decEqList da (x :: xs) (y :: ys)    | No contra  | q          = No (lemmaEitherN
 decEqDictList : {a : Type} -> DecEqDict a -> DecEqDict (List a)
 decEqDictList da = record { decEq = decEqList da }
 
-{- TODO rest of the file
-
 -- For the primitives, we have to cheat because we don't have access to their
 -- internal implementations.
 
@@ -181,12 +179,18 @@ decEqDictList da = record { decEq = decEqList da }
 -- Int
 --------------------------------------------------------------------------------
 
-instance DecEq Int where
-    decEq x y = if x == y then Yes primitiveEq else No primitiveNotEq
-       where primitiveEq : x = y
-             primitiveEq = believe_me (Refl {x})
-             postulate primitiveNotEq : x = y -> Void
+-- instance DecEq Int where
+decEqInt : DecEqDict' Int
+decEqInt x y = if primIntegerEquality x y  then  Yes primitiveEq
+                                           else  No  primitiveNotEq
+       where postulate
+               primitiveEq : x == y
+               primitiveNotEq : x == y -> Void
 
+decEqDictInt : DecEqDict Int
+decEqDictInt = record { decEq = decEqInt }
+
+{- TODO rest of the file
 --------------------------------------------------------------------------------
 -- Char
 --------------------------------------------------------------------------------
