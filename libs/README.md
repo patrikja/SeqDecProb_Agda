@@ -25,6 +25,8 @@ Some differences:
 | (a, b) | (a , b) | The pair constructor _,_ in Agda needs space before on both sides |
 | (a : A ** B) | Sigma A (\a -> B) | No built-in syntactic sugar for the dependent sum type in Agda. |
 | (a ** b) | MkSigma a b | No built-in syntactic sugar for dependent sum values in Agda. |
+| = rewrite someEqualityProof in exp | rewrite someEqualityProof = exp | But currently this fails because the builtin equality in Idris is heterogeneous but the Agda pragma requires homogenous equality (I think) |
+
 
 ----------------------------------------------------------------
 

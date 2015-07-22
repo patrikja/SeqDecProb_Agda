@@ -3,6 +3,7 @@ module Idris.Data.Vect where
 open import Idris.Builtins
 open import Idris.Prelude.Basics
 open import Idris.Prelude.List as List
+open import Idris.Prelude.Decidable.Equality
 -- open import Idris.Language.Reflection
 open import Idris.Data.VectType
 open import Idris.Prelude.Nat
@@ -31,16 +32,15 @@ neitherHereNorThere : {a : Type} -> {n : Nat} ->
 neitherHereNorThere xneqy xninxs Here = xneqy Refl
 neitherHereNorThere xneqy xninxs (There xinxs) = xninxs xinxs
 
-{- TODO DecEq
 -- ||| A decision procedure for Elem
-isElem : {n : Nat} -> {decEq : DecEq a} -> (x : a) -> (xs : Vect n a) -> Dec (Elem x xs)
+isElem :  {a : Type} -> {n : Nat} ->
+          {{da : DecEqDict a}} -> (x : a) -> (xs : Vect n a) -> Dec (Elem x xs)
 isElem x [] = No noEmptyElem
-isElem x (y :: xs) with (decEq x y)
-isElem x (x :: xs) | (Yes Refl) = Yes Here
-isElem x (y :: xs) | (No xneqy) with (isElem x xs)
-isElem x (y :: xs) | (No xneqy) | (Yes xinxs) = Yes (There xinxs)
-isElem x (y :: xs) | (No xneqy) | (No xninxs) = No (neitherHereNorThere xneqy xninxs)
--}
+isElem {{da}} x (y :: xs) with (DecEqDict.decEq da x y)
+isElem x (.x :: xs) | (Yes Refl) = Yes Here
+isElem x (y  :: xs) | (No xneqy) with (isElem x xs)
+isElem x (y  :: xs) | (No xneqy) | (Yes xinxs) = Yes (There xinxs)
+isElem x (y  :: xs) | (No xneqy) | (No xninxs) = No (neitherHereNorThere xneqy xninxs)
 
 {- TODO
 -- ||| A tactic for discovering where, if anywhere, an element is in a vector

@@ -173,7 +173,7 @@ module Vect where
           go {n = n} {m = S m} acc (x :: xs) = coerceVect (plus n (S m)) (S (plus n m))
                                                  (sym (plusSuccRightSucc n m)) (go (x :: acc) xs)
 
-{- TODO
+
   -- ||| Alternate an element between the other elements of a vector
   -- ||| @ sep the element to intersperse
   -- ||| @ xs the vector to separate with `sep`
@@ -184,10 +184,13 @@ module Vect where
     where
       intersperse' : {a : Type} -> {n : Nat} ->
                      a -> Vect n a -> Vect (n + n) a
-      intersperse'           sep []      = []
-      intersperse' {n = S n} sep (x :: xs) = {! rewrite sym $ plusSuccRightSucc n n
-                                         in sep :: x :: intersperse' sep xs !}
--}
+      intersperse'           sep []         = []
+      intersperse' {a} {S n} sep (x :: xs)
+        with   n + S n     | sym (plusSuccRightSucc n n)
+      ...  | .(S (n + n))  | Refl = sep :: x :: intersperse' sep xs
+      -- rewrite sym (plusSuccRightSucc n n)
+      -- in sep :: x :: intersperse' sep xs
+
   --------------------------------------------------------------------------------
   -- Conversion from list (toList is provided by Foldable)
   --------------------------------------------------------------------------------

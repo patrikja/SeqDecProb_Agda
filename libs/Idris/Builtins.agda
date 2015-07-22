@@ -33,6 +33,8 @@ data Unit : Type where unit : Unit
 data _==_  {l} {a : Set l} (x : a) : {b : Set l} -> (y : b) -> Set where
   Refl : x == x
 
+-- This does not quite work with heterogenous equality: {-# BUILTIN EQUALITY _==_ #-}
+
 infix 4 _==_
 
 postulate
