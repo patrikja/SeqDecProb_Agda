@@ -4,6 +4,7 @@ open import Idris.Prelude.Basics
 open import Idris.Prelude.Maybe
 open import Idris.Prelude.Bool
 open import Idris.Prelude.Nat
+open import Idris.Prelude.Classes
 open import Idris.Syntax.PreorderReasoning
 -- TODO: pick a good naming for Idris' = and ==: Currently we have renamed = in Idris to == in Agda (because = is reserved) but not figured out another name for ==
 open import Idris.Data.Fin using (Fin; FZ; FS)
@@ -273,30 +274,39 @@ module Vect where
   --------------------------------------------------------------------------------
   -- Equality
   --------------------------------------------------------------------------------
-{- TODO
-  instance (Eq a) => Eq (Vect n a) where
-    _==_ []      []      = True
-    _==_ (x :: xs) (y :: ys) =
-      if x == y then
-        xs == ys
+
+--  instance (Eq a) => Eq (Vect n a) where
+  -- Note that the vectors will always have the same shape (thanks to the same n in the types)
+  eqVect : {n : Nat} -> {a : Type} -> EqDict a -> EqDict' (Vect n a)
+  eqVect eqa []         []         = True
+  eqVect eqa (x :: xs)  (y :: ys)  =
+      if x === y then
+        eqVect eqa xs ys
       else
         False
--}
+    where open EqDict eqa
+
+  eqDictVect : {n : Nat} -> {a : Type} -> EqDict a -> EqDict (Vect n a)
+  eqDictVect eqa = record { _===_ = eqVect eqa }
 
   --------------------------------------------------------------------------------
   -- Order
   --------------------------------------------------------------------------------
-{- TODO
 
-  instance Ord a => Ord (Vect n a) where
-    compare []      []      = EQ
-    compare (x :: xs) (y :: ys) =
+
+--  instance Ord a => Ord (Vect n a) where
+  compareVect : {n : Nat} -> {a : Type} -> OrdDict a -> OrdDict' (Vect n a)
+  compareVect orda []         []         = EQ
+  compareVect orda (x :: xs)  (y :: ys)  =
       if x /= y then
         compare x y
       else
-        compare xs ys
--}
+        compareVect orda xs ys
+    where open OrdDict orda
 
+  ordDictVect : {n : Nat} -> {a : Type} -> OrdDict a -> OrdDict (Vect n a)
+  ordDictVect orda = record { eqDict  = eqDictVect (OrdDict.eqDict orda) ;
+                              compare = compareVect orda }
 
   --------------------------------------------------------------------------------
   -- Maps
