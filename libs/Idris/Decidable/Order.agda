@@ -3,7 +3,7 @@ open import Idris.Prelude.Nat
 open import Idris.Prelude.Basics -- Dec
 open import Idris.Decidable.Decidable
 -- import Decidable.Equality
--- import Data.Fin
+open import Idris.Data.Fin hiding (shift)
 -- import Data.Fun
 -- import Data.Rel
 
@@ -58,46 +58,49 @@ instance Equivalence t ((=) {A = t} {B = t}) where
 
 instance Congruence t f ((=) {A = t} {B = t}) where
   congruent a b = cong {a = a} {b = b} f
+-}
 
 --------------------------------------------------------------------------------
 -- Natural numbers
 --------------------------------------------------------------------------------
 
-total LTEIsTransitive : (m : Nat) -> (n : Nat) -> (o : Nat) ->
+LTEIsTransitive : (m : Nat) -> (n : Nat) -> (o : Nat) ->
                            LTE m n -> LTE n o ->
                            LTE m o
 LTEIsTransitive Z n o                 LTEZero                  nlteo   = LTEZero
 LTEIsTransitive (S m) (S n) (S o) (LTESucc mlten)    (LTESucc nlteo)   = LTESucc (LTEIsTransitive m n o mlten nlteo)
 
-total LTEIsReflexive : (n : Nat) -> LTE n n
+LTEIsReflexive : (n : Nat) -> LTE n n
 LTEIsReflexive Z      = LTEZero
 LTEIsReflexive (S n)  = LTESucc (LTEIsReflexive n)
 
+{-
 instance Preorder Nat LTE where
   transitive = LTEIsTransitive
   reflexive  = LTEIsReflexive
+-}
 
-total LTEIsAntisymmetric : (m : Nat) -> (n : Nat) ->
-                              LTE m n -> LTE n m -> m = n
-LTEIsAntisymmetric Z Z         LTEZero LTEZero = Refl
-LTEIsAntisymmetric (S n) (S m) (LTESucc mLTEn) (LTESucc nLTEm) with (LTEIsAntisymmetric n m mLTEn nLTEm)
-   LTEIsAntisymmetric (S n) (S n) (LTESucc mLTEn) (LTESucc nLTEm)    | Refl = Refl
+LTEIsAntisymmetric : (m : Nat) -> (n : Nat) ->
+                     LTE m n -> LTE n m -> m == n
+LTEIsAntisymmetric Z     Z      p       q  = Refl
+LTEIsAntisymmetric Z     (S n)  LTEZero ()
+LTEIsAntisymmetric (S m) Z      ()      q
+LTEIsAntisymmetric (S m) (S n)  (LTESucc p) (LTESucc q) with LTEIsAntisymmetric m n p q
+LTEIsAntisymmetric (S m) (S .m) (LTESucc p) (LTESucc q) | Refl = Refl
 
-
+{-
 instance Poset Nat LTE where
   antisymmetric = LTEIsAntisymmetric
+-}
 
-total zeroNeverGreater : {n : Nat} -> LTE (S n) Z -> Void
-zeroNeverGreater {n} LTEZero     impossible
-zeroNeverGreater {n} (LTESucc _) impossible
+zeroNeverGreater : {n : Nat} -> LTE (S n) Z -> Void
+zeroNeverGreater ()
 
-total zeroAlwaysSmaller : {n : Nat} -> LTE Z n
+zeroAlwaysSmaller : {n : Nat} -> LTE Z n
 zeroAlwaysSmaller = LTEZero
 
--}
 ltesuccinjective : {n : Nat} -> {m : Nat} -> (LTE n m -> Void) -> LTE (S n) (S m) -> Void
 ltesuccinjective {n} {m} disprf (LTESucc nLTEm) = void (disprf nLTEm)
-
 
 decideLTE : (n : Nat) -> (m : Nat) -> Dec (LTE n m)
 decideLTE    Z      y  = Yes LTEZero
@@ -114,26 +117,26 @@ instance Decidable [Nat,Nat] LTE where
 -- lte : (m : Nat) -> (n : Nat) -> Dec (LTE m n)
 -- lte = decideLTE
 
-{-
-total
 shift : (m : Nat) -> (n : Nat) -> LTE m n -> LTE (S m) (S n)
 shift m n mLTEn = LTESucc mLTEn
 
+{-
 instance Ordered Nat LTE where
   order Z      n = Left LTEZero
   order m      Z = Right LTEZero
   order (S k) (S j) with (order {to=LTE} k j)
     order (S k) (S j) | Left  prf = Left  (shift k j prf)
     order (S k) (S j) | Right prf = Right (shift j k prf)
+-}
 
 ----------------------------------------------------------------------------------
 ---- Finite numbers
 ----------------------------------------------------------------------------------
 
-using (k : Nat)
+module FinNum (k : Nat) where
   data FinLTE : Fin k -> Fin k -> Type where
     FromNatPrf : {m : Fin k} -> {n : Fin k} -> LTE (finToNat m) (finToNat n) -> FinLTE m n
-
+{-
   instance Preorder (Fin k) FinLTE where
     transitive m n o (FromNatPrf p1) (FromNatPrf p2) =
       FromNatPrf (LTEIsTransitive (finToNat m) (finToNat n) (finToNat o) p1 p2)
@@ -154,3 +157,4 @@ using (k : Nat)
              (Right . FromNatPrf)
              (order (finToNat m) (finToNat n))
 -}
+open FinNum
